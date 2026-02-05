@@ -6,7 +6,30 @@ All notable changes to Dex will be documented in this file.
 
 ---
 
-## [Unreleased]
+## [1.3.0] - 2026-02-05
+
+### 🎯 Smart Pillar Inference for Task Creation
+
+**What was frustrating:** Every time you asked to create a task ("Remind me to prep for the Acme demo"), Dex would stop and ask: "Which pillar is this for?" This added friction to quick captures and broke your flow.
+
+**What's different now:** Dex analyzes your request and infers the most likely pillar based on keywords:
+- "Prep demo for Acme Corp" → **Deal Support** (demo + customer keywords)
+- "Write blog post about AI" → **Thought Leadership** (content keywords)
+- "Review beta feedback" → **Product Feedback** (feedback keywords)
+
+Then confirms with a quick one-liner:
+> "Creating under Product Feedback pillar (looks like data gathering). Sound right, or should it be Deal Support / Thought Leadership?"
+
+**Why you'll care:** Fast task capture with data quality. No more back-and-forth just to add a reminder. But your tasks still have proper strategic alignment.
+
+**Customization options:** Want different behavior? You can customize this in your CLAUDE.md:
+- **Less strict:** Remove the pillar requirement entirely and use a default pillar
+- **Triage flow:** Route quick captures to `00-Inbox/Quick_Captures.md`, then sort them during `/triage` (skill you can build yourself or request)
+- **Your own keywords:** Edit `System/pillars.yaml` to add custom keywords for better inference
+
+**Technical:** Updated task creation behavior in `.claude/CLAUDE.md` to include pillar inference logic. The work-mcp validation still requires a pillar (maintains data integrity), but Dex now handles the inference and confirmation before calling the MCP.
+
+---
 
 ### ⚡ Performance: Calendar Queries 30x Faster (30s → <1s)
 
