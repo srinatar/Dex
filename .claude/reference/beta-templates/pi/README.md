@@ -51,7 +51,7 @@ Pi will:
 
 ## How Pi Connects to Dex
 
-Pi communicates with Dex through an **MCP bridge** — a translator that lets Pi read your tasks, calendar, and other Dex data.
+Pi has **native MCP (Model Context Protocol) support** — it can directly access your Dex MCP servers without any bridge code.
 
 This means tools Pi builds can:
 - Access your task list
@@ -59,7 +59,7 @@ This means tools Pi builds can:
 - Look up people pages
 - Query meeting notes
 
-The bridge is pre-configured in `.pi/extensions/dex-mcp-bridge.ts`.
+The MCP servers are configured automatically in your Pi settings.
 
 ## What to Build with Pi
 
@@ -86,12 +86,17 @@ For **deterministic operations** (task CRUD, calendar writes), continue using De
 
 ## Configuration
 
-### MCP Bridge
+### MCP Servers
 
-The bridge is pre-installed at `.pi/extensions/dex-mcp-bridge.ts`. It connects to:
+Pi connects directly to these Dex MCP servers:
 
 - **work-mcp** — For task/goal/priority operations
 - **calendar-mcp** — For calendar access
+- **career-mcp** — For career development tracking
+- **commitment-mcp** — For commitment detection
+- And all other Dex MCP servers
+
+These are configured automatically during beta activation.
 
 ### AGENTS.md
 
@@ -109,13 +114,13 @@ npm install -g @mariozechner/pi-coding-agent
 
 ### Pi can't access Dex data
 
-Check the MCP bridge is present:
+Check that MCP servers are running:
 
 ```bash
-ls .pi/extensions/dex-mcp-bridge.ts
+pi --mcp-status
 ```
 
-If missing, run `/beta-activate PILAUNCH2026` again.
+If servers aren't connecting, verify your `.pi/config.json` has the Dex MCP servers configured.
 
 ### Extension not working
 

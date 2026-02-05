@@ -264,6 +264,9 @@ def is_feature_activated(feature_key: str) -> bool:
         return False
 
     beta = profile.get('beta', {})
+    # Handle case where beta might be a bool instead of dict
+    if not isinstance(beta, dict):
+        beta = {}
     activated = beta.get('activated', {})
 
     return feature_key in activated
@@ -518,6 +521,9 @@ async def handle_call_tool(
             return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
 
         beta = profile.get('beta', {})
+        # Handle case where beta might be a bool instead of dict
+        if not isinstance(beta, dict):
+            beta = {}
         activated = beta.get('activated', {})
 
         # Enrich with feature details

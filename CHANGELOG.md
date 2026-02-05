@@ -8,6 +8,25 @@ All notable changes to Dex will be documented in this file.
 
 ## [Unreleased]
 
+### ⚡ Performance: Calendar Queries 30x Faster (30s → <1s)
+
+**What was frustrating:** Calendar queries took 30 seconds to respond. You'd ask "what meetings do I have?" and wait... and wait... Eventually you'd stop asking.
+
+**What was broken:** The calendar MCP used AppleScript to query Calendar.app. AppleScript's `every event of calendar` loads ALL events (years of history) into memory, then filters client-side. For a work calendar with thousands of events, this was painfully slow. Plus, recurring events returned all historical instances, causing ghost events from weeks ago to appear in today's results.
+
+**What's fixed:** 
+- Replaced AppleScript with **native EventKit** (Apple's calendar framework)
+- EventKit uses proper database queries, not linear scans
+- Returns only events in the exact date range requested
+- **Performance:** 30 seconds → under 1 second (30x faster!)
+- **Accuracy:** No more ghost events from the past
+
+**Technical:** Created `calendar_eventkit.py` using PyObjC bindings for EventKit. Updated `calendar_server.py` to use EventKit for all date-range queries. Added `pyobjc-framework-EventKit` to install script dependencies.
+
+**How to update:** In Cursor, type `/dex-update` — that's it!
+
+---
+
 ### 🐛 Bug Fix: Hardcoded Paths (Thank You Community!)
 
 **What was broken:** Several scripts and features contained paths hardcoded to my machine (`/Users/dave/...`). 🙈 

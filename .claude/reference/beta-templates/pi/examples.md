@@ -84,9 +84,11 @@ Pi adds aggregation logic and a summary section.
 
 After these iterations, here's the kind of extension Pi creates:
 
+**Note:** This example shows the conceptual approach. Modern Pi extensions use native MCP tools instead of the bridge pattern shown here.
+
 ```typescript
 // .pi/extensions/commitment-extractor.ts
-import { DexBridge } from './dex-mcp-bridge';
+import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 
 interface Commitment {
   text: string;

@@ -190,13 +190,13 @@ if [ -n "$PIP_CMD" ]; then
     fi
     
     # Try standard install first
-    if $PIP_CMD install $PIP_FLAGS mcp pyyaml --quiet 2>/dev/null; then
-        echo "✅ Work MCP dependencies installed"
+    if $PIP_CMD install $PIP_FLAGS mcp pyyaml pyobjc-framework-EventKit --quiet 2>/dev/null; then
+        echo "✅ MCP dependencies installed (including fast EventKit calendar access)"
     else
         # Try with --user flag (works around permission issues)
         echo "   Trying with --user flag..."
-        if $PIP_CMD install --user $PIP_FLAGS mcp pyyaml --quiet 2>/dev/null; then
-            echo "✅ Work MCP dependencies installed (user mode)"
+        if $PIP_CMD install --user $PIP_FLAGS mcp pyyaml pyobjc-framework-EventKit --quiet 2>/dev/null; then
+            echo "✅ MCP dependencies installed (user mode)"
         else
             echo "❌ Could not install Python dependencies"
             echo ""
@@ -206,11 +206,11 @@ if [ -n "$PIP_CMD" ]; then
             if [[ "$OSTYPE" == "darwin"* ]] && [[ $(uname -m) == "arm64" ]]; then
                 echo "On Apple Silicon, sometimes pip installs Intel packages by mistake."
                 echo "Try manually with explicit architecture flags:"
-                echo "  arch -arm64 $PIP_CMD install --force-reinstall --no-cache-dir mcp pyyaml"
+                echo "  arch -arm64 $PIP_CMD install --force-reinstall --no-cache-dir mcp pyyaml pyobjc-framework-EventKit"
             else
                 echo "Try manually (upgrade pip first):"
                 echo "  $PYTHON_CMD -m pip install --upgrade pip"
-                echo "  $PIP_CMD install --user mcp pyyaml"
+                echo "  $PIP_CMD install --user mcp pyyaml pyobjc-framework-EventKit"
             fi
             echo ""
             read -p "Press Enter to continue setup (you can fix this later)..."
