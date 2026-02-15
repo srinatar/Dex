@@ -6,6 +6,18 @@ All notable changes to Dex will be documented in this file.
 
 ---
 
+## [1.5.0] - 2026-02-15
+
+### 🔧 Fixed: Granola Meeting Notes Recovery
+
+**Before:** If Granola stored your meeting notes in its internal ProseMirror format (instead of plain markdown), Dex would treat those meetings as having no notes — skipping them during processing, search, and meeting intelligence. This was most common with meetings recorded on mobile or where notes were edited in Granola's rich text editor.
+
+**Now:** Dex detects ProseMirror-formatted notes and automatically converts them to markdown. This applies to meeting sync, search, and the Granola MCP server — so meetings that were previously invisible now show up everywhere.
+
+**Result:** No more "missing" meetings. If Granola has your notes, Dex will find them regardless of storage format.
+
+---
+
 ## [1.4.0] - 2026-02-15
 
 ### 🔧 Fixed: Dex Now Always Knows What Day It Is

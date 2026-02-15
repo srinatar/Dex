@@ -368,12 +368,30 @@ def extract_meeting_info_from_cache(doc: Dict[str, Any], transcripts: Dict[str, 
     created_at = doc.get('created_at', '')
     meeting_date = created_at.split('T')[0] if created_at else None
     
+    # Extract notes: try notes_markdown first, fall back to last_viewed_panel
+    notes = doc.get('notes_markdown', '')
+    if not notes:
+        panel = doc.get('last_viewed_panel')
+        if panel and isinstance(panel, dict):
+            panel_content = panel.get('content')
+            if panel_content and isinstance(panel_content, dict):
+                notes = convert_prosemirror_to_markdown(panel_content)
+        elif panel and isinstance(panel, str):
+            try:
+                parsed_panel = json.loads(panel)
+                if isinstance(parsed_panel, dict):
+                    panel_content = parsed_panel.get('content')
+                    if panel_content and isinstance(panel_content, dict):
+                        notes = convert_prosemirror_to_markdown(panel_content)
+            except (json.JSONDecodeError, TypeError):
+                pass
+    
     return {
         'id': meeting_id,
         'title': doc.get('title', 'Untitled Meeting'),
         'date': meeting_date,
         'created_at': created_at,
-        'notes': doc.get('notes_markdown', ''),
+        'notes': notes,
         'has_transcript': bool(transcript),
         'transcript_length': len(transcript) if transcript else 0,
         'participants': participants,
@@ -489,8 +507,8 @@ def get_meeting_by_id_from_cache(cache: Dict[str, Any], meeting_id: str) -> Opti
             for t in sorted(transcript_entries, key=lambda x: x.get('start_timestamp', ''))
         ).strip()
     
-    # Add action items if present in notes
-    notes = doc.get('notes_markdown', '')
+    # Add action items if present in notes (uses notes from extract_meeting_info_from_cache which checks last_viewed_panel)
+    notes = info.get('notes', '')
     action_items = []
     for line in notes.split('\n'):
         line = line.strip()
@@ -581,9 +599,15 @@ def search_meetings_in_cache(
             results.append(extract_meeting_info_from_cache(doc, cache['transcripts'], meeting_id))
             continue
         
-        # Search in notes
-        notes = doc.get('notes_markdown', '').lower()
-        if query_lower in notes:
+        # Search in notes (check notes_markdown and last_viewed_panel)
+        notes = doc.get('notes_markdown', '')
+        if not notes:
+            panel = doc.get('last_viewed_panel')
+            if panel and isinstance(panel, dict):
+                panel_content = panel.get('content')
+                if panel_content and isinstance(panel_content, dict):
+                    notes = convert_prosemirror_to_markdown(panel_content)
+        if query_lower in notes.lower():
             results.append(extract_meeting_info_from_cache(doc, cache['transcripts'], meeting_id))
             continue
         
