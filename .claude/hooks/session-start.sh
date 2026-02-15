@@ -15,6 +15,8 @@ ONBOARDING_MARKER="$CLAUDE_DIR/System/.onboarding-complete"
 
 echo "=== Dex Session Context ==="
 echo ""
+echo "📅 Today: $(date '+%A, %B %d, %Y')"
+echo ""
 
 # Skip background checks during onboarding - nothing to check yet!
 if [[ ! -f "$ONBOARDING_MARKER" ]]; then
