@@ -40,6 +40,29 @@ Run these silently without user-facing output:
 
 1. **Update check**: `check_for_updates(force=False)` - store notification if available
 2. **Self-learning checks**: Run changelog and learning review scripts if due
+3. **Search index refresh**: Run `qmd update && qmd embed` to refresh vault search index with any overnight changes (meetings processed, files edited, etc.). If `qmd` is not installed, skip silently.
+4. **Innovation synthesis** (silent): Call `synthesize_changelog()` and `synthesize_learnings()` from Improvements MCP. These run in background and populate the backlog — results are surfaced in Step 1.5 below.
+
+---
+
+## Step 1.5: Innovation Spotlight (Concierge)
+
+After background checks complete, check for noteworthy backlog activity:
+
+1. Call `list_ideas(status="active", min_score=70)` from Improvements MCP
+2. Check `System/.synthesis-state.json` for recent synthesis activity (last 7 days)
+3. If there are AI-authored or recently enriched ideas, pick the most impactful one
+
+**Surface as a brief spotlight in the plan output (1-2 lines max):**
+
+> **Innovation Spotlight:** Claude Code shipped native memory (v2.1.32) — this could simplify idea-006 (Session Memory MCP). Run `/dex-improve idea-006` to explore.
+
+**Rules:**
+- Show at most 1 spotlight per daily plan (don't overwhelm)
+- Rotate through ideas — don't show the same one twice in a row
+- Only show if there's genuine "Why Now?" urgency (new evidence in last 7 days)
+- If no recent synthesis activity, skip this section entirely
+- Never block the plan for this — it's a helpful aside, not a gate
 
 ---
 
@@ -363,3 +386,4 @@ The plan works at multiple levels:
 | Calendar | dex-calendar-mcp | `calendar_get_today`, `calendar_get_events_with_attendees` |
 | Granola | dex-granola-mcp | `get_recent_meetings` |
 | Work | dex-work-mcp | `list_tasks`, `get_week_progress`, `get_meeting_context`, `get_commitments_due`, `analyze_calendar_capacity`, `suggest_task_scheduling` |
+| Improvements | dex-improvements-mcp | `synthesize_changelog`, `synthesize_learnings`, `list_ideas` |

@@ -307,6 +307,28 @@ Suggest 3 focus items for tomorrow:
 
 ---
 
+## Step 9.5: Retrospective Insight (Innovation Concierge)
+
+At the end of the review, check if there's a relevant backlog idea to surface:
+
+1. Call `list_ideas(status="active", min_score=70)` from Improvements MCP
+2. Look for ideas that connect to today's work or learnings:
+   - Did the user work on tasks related to a backlog idea?
+   - Did learnings captured today strengthen an existing idea?
+   - Is there a "Why Now?" idea with fresh evidence?
+3. If a relevant match exists, surface it briefly:
+
+> **Retrospective Insight:** Today's meeting processing struggles connect to idea-027 (RAG-Powered Vault Search) — semantic search could make finding meeting context much faster. Worth exploring? Run `/dex-improve idea-027`.
+
+**Rules:**
+- Show at most 1 insight per review
+- Only show if genuinely connected to today's work (not random)
+- Frame as retrospective — "based on what you just did, here's what could help"
+- If no connection, skip entirely
+- Keep it to 1-2 lines max
+
+---
+
 ## Step 10: Track Usage (Silent)
 
 Update `System/usage_log.md`.

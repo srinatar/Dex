@@ -6,6 +6,24 @@ All notable changes to Dex will be documented in this file.
 
 ---
 
+## [1.6.0] - 2026-02-16
+
+### 🔧 Fixed: "Evolve Itself" Was Broken — Now It Actually Works
+
+**Before:** Dex promised to "suggest improvements based on usage patterns" and "monitor Claude Code releases daily." The monitoring worked — `/dex-whats-new` would scan the changelog and show you new features. But it stopped there. Nothing was written to your improvement backlog. Your `System/Dex_Backlog.md` said "AI-ranked improvement backlog (ideas from you + AI discoveries)" — but the "AI discoveries" section was always empty. The system detected signals but never connected them to actual improvement ideas.
+
+**Now:** The pipeline is connected end-to-end:
+
+- `/dex-whats-new` scans Claude Code releases AND automatically creates or enriches backlog ideas — not just shows you what's new and moves on
+- `/daily-plan` surfaces the most timely idea as an "Innovation Spotlight" when there's fresh evidence (e.g., "Claude just shipped native memory — this changes how we'd build idea-006")
+- `/daily-review` connects today's frustrations to existing improvement ideas in your backlog
+- `/week-review` shows your top 3 highest-scored ideas
+- Say "I wish Dex could..." in conversation and it's captured to your backlog automatically — deduplicated against what's already there
+
+**Result:** The self-improving system that was promised now actually works. Your backlog fills itself with AI-discovered ideas, enriches them as new evidence arrives, and surfaces the right ones at the right time — during your existing planning and review rituals.
+
+---
+
 ## [1.5.0] - 2026-02-15
 
 ### 🔧 Fixed: Granola Meeting Notes Recovery

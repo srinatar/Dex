@@ -350,6 +350,41 @@ Based on this week's progress:
 
 ---
 
+## Innovation Concierge: Top 3 This Week
+
+At the end of the weekly review, surface the top backlog ideas:
+
+1. Call `list_ideas(status="active", min_score=70)` from Improvements MCP
+2. Pick the top 3 ideas by score that haven't been surfaced in the last week review
+3. Include in the output format as a section:
+
+```markdown
+## 🤖 Top 3 Dex Improvement Ideas
+
+Your AI-curated backlog has surfaced these high-impact ideas:
+
+1. **[idea-XXX]** Title (Score: XX)
+   Why now: [Brief evidence or timeliness reason]
+
+2. **[idea-XXX]** Title (Score: XX)
+   Why now: [Brief evidence]
+
+3. **[idea-XXX]** Title (Score: XX)
+   Why now: [Brief evidence]
+
+> Interested? Run `/dex-improve [idea-id]` to workshop any of these.
+> Run `/dex-backlog` to see the full ranked backlog.
+```
+
+**Rules:**
+- Only show ideas with score >= 70 (don't surface low-value noise)
+- Prefer ideas with recent "Why Now?" evidence
+- If fewer than 3 qualifying ideas, show however many exist
+- If no qualifying ideas, skip this section entirely
+- This is a gentle nudge, not a sales pitch
+
+---
+
 ## Follow-up Actions
 
 After synthesis:
@@ -366,3 +401,4 @@ After synthesis:
 |-------------|------------|------------|
 | Work | dex-work-mcp | `list_tasks`, `get_week_progress`, `get_quarterly_goals`, `get_goal_status` |
 | Calendar | dex-calendar-mcp | `calendar_get_events_with_attendees` |
+| Improvements | dex-improvements-mcp | `list_ideas` |
