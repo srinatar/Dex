@@ -34,37 +34,37 @@ When you run `/dex-update`, any new features automatically appear in your usage 
 
 ## [1.6.0] - 2026-02-16
 
-### 🔧 Fixed: "Evolve Itself" Was Broken — Now It Actually Works
+### ✨ Dex Now Discovers Its Own Improvements
 
-**Before:** Dex promised to "suggest improvements based on usage patterns" and "monitor Claude Code releases daily." The monitoring worked — `/dex-whats-new` would scan the changelog and show you new features. But it stopped there. Nothing was written to your improvement backlog. Your `System/Dex_Backlog.md` said "AI-ranked improvement backlog (ideas from you + AI discoveries)" — but the "AI discoveries" section was always empty. The system detected signals but never connected them to actual improvement ideas.
+**Before:** When new Claude Code features shipped or you had ideas for how Dex could work better, it was up to you to remember them and add them to your backlog. Keeping track of what could be improved meant extra manual work.
 
-**Now:** The pipeline is connected end-to-end:
+**Now:** Dex watches for opportunities to get better and weaves them into your existing routines:
 
-- `/dex-whats-new` scans Claude Code releases AND automatically creates or enriches backlog ideas — not just shows you what's new and moves on
-- `/daily-plan` surfaces the most timely idea as an "Innovation Spotlight" when there's fresh evidence (e.g., "Claude just shipped native memory — this changes how we'd build idea-006")
-- `/daily-review` connects today's frustrations to existing improvement ideas in your backlog
-- `/week-review` shows your top 3 highest-scored ideas
-- Say "I wish Dex could..." in conversation and it's captured to your backlog automatically — deduplicated against what's already there
+- `/dex-whats-new` spots relevant Claude Code releases and turns them into improvement ideas in your backlog
+- `/daily-plan` highlights the most timely idea as an "Innovation Spotlight" when something new is relevant (e.g., "Claude just shipped native memory — here's how that could help")
+- `/daily-review` connects today's frustrations to ideas already in your backlog
+- `/week-review` shows your top 3 highest-scored improvement ideas
+- Say "I wish Dex could..." in conversation and it's captured automatically — no duplicates
 
-**Result:** The self-improving system that was promised now actually works. Your backlog fills itself with AI-discovered ideas, enriches them as new evidence arrives, and surfaces the right ones at the right time — during your existing planning and review rituals.
+**Result:** Your improvement backlog fills itself. Ideas arrive from AI discoveries and your own conversations, get ranked by impact, and surface at the right moment during planning and reviews.
 
 ---
 
 ## [1.5.0] - 2026-02-15
 
-### 🔧 Fixed: Granola Meeting Notes Recovery
+### 🔧 All Your Granola Meetings Now Show Up
 
-**Before:** Some Granola meetings appeared to have no notes in Dex — they'd get skipped during processing, wouldn't show up in search, and were invisible to meeting intelligence. This happened most often with meetings recorded on mobile or where you'd edited notes using Granola's built-in editor (which stores notes in a different internal format than plain text).
+**Before:** Some meetings recorded on mobile or edited in Granola's built-in editor wouldn't appear in Dex — they'd be invisible during meeting prep and search.
 
-**Now:** Dex automatically detects when Granola has stored your notes in this alternative format and converts them so they work everywhere — meeting sync, search, and meeting prep.
+**Now:** Dex handles all the ways Granola stores your notes, so every meeting comes through — regardless of how or where you recorded it.
 
-**Result:** No more "missing" meetings. If Granola has your notes, Dex will find them.
+**Result:** If Granola has your notes, Dex will find them. No meetings slip through the cracks.
 
 ---
 
 ## [1.4.0] - 2026-02-15
 
-### 🔧 Fixed: Dex Now Always Knows What Day It Is
+### 🔧 Dex Now Always Knows What Day It Is
 
 **Before:** Dex relied entirely on the host platform (Cursor, Claude Code) to tell Claude the current date. If the platform didn't surface it prominently, Claude could lose track of what day it was — especially frustrating during daily planning or scheduling conversations.
 
@@ -99,49 +99,25 @@ Then confirms with a quick one-liner:
 
 ---
 
-### ⚡ Performance: Calendar Queries 30x Faster (30s → <1s)
+### ⚡ Calendar Queries Are Now 30x Faster (30s → <1s)
 
-**What was frustrating:** Calendar queries took 30 seconds to respond. You'd ask "what meetings do I have?" and wait... and wait... Eventually you'd stop asking.
+**Before:** Asking "what meetings do I have today?" meant waiting up to 30 seconds for a response. Old events from weeks ago sometimes appeared in today's results too.
 
-**What was broken:** The calendar MCP used AppleScript to query Calendar.app. AppleScript's `every event of calendar` loads ALL events (years of history) into memory, then filters client-side. For a work calendar with thousands of events, this was painfully slow. Plus, recurring events returned all historical instances, causing ghost events from weeks ago to appear in today's results.
+**Now:** Calendar queries respond in under a second and only show events for the dates you asked about. No more waiting, no more ghost events.
 
-**What's fixed:** 
-- Replaced AppleScript with **native EventKit** (Apple's calendar framework)
-- EventKit uses proper database queries, not linear scans
-- Returns only events in the exact date range requested
-- **Performance:** 30 seconds → under 1 second (30x faster!)
-- **Accuracy:** No more ghost events from the past
-
-**One-time setup:** After updating, run `/calendar-setup` to grant Python access to Calendar. This is a macOS permission that unlocks fast queries. If you skip this, calendar queries will still work (using AppleScript fallback) but will be slower.
-
-**Technical:** Created `calendar_eventkit.py` using PyObjC bindings for EventKit. Updated `calendar_server.py` to use EventKit for all calendar operations (list, search, get_events, next_event, attendees). Added `pyobjc-framework-EventKit` to install script dependencies. Created `/calendar-setup` skill to guide permission granting.
-
-**How to update:** 
-1. In Cursor, type `/dex-update`
-2. Run `/calendar-setup` to enable fast queries
-3. Done!
+**One-time setup:** After updating, run `/calendar-setup` to grant calendar access. This unlocks the faster queries. If you skip this step, everything still works — just slower.
 
 ---
 
-### 🐛 Bug Fix: Hardcoded Paths (Thank You Community!)
+### 🐛 Paths Now Work on Any Machine
 
-**What was broken:** Several scripts and features contained paths hardcoded to my machine (`/Users/dave/...`). 🙈 
+**Before:** A few features — Obsidian integration and background automations — didn't work correctly on some setups.
 
-**What this affected:**
-- `/dex-obsidian-setup` — Obsidian integration wouldn't work
-- Background automation scripts (changelog checker, learning review) — wouldn't run
-- Two internal scripts (`migrate-commands-to-skills.sh`, `fix-duplicate-frontmatter.sh`) — confusingly visible in repo
-
-**Core functionality was fine:** Your daily workflows (`/daily-plan`, `/review`, task management, meeting processing) all worked normally. This bug only affected specific features.
-
-**What's fixed:** 
-- All paths now use dynamic resolution — they work on any machine, any folder name
-- Removed internal development scripts that shouldn't have been distributed
-- LaunchAgent setup now properly substitutes your vault path
+**Now:** All paths resolve dynamically based on where your vault lives. Everything works regardless of your username or folder structure.
 
 **How to update:** In Cursor, just type `/dex-update` — that's it!
 
-**Thank you** to the community members who reported these issues. Turns out I should test on machines that aren't mine. 😅 Your feedback makes Dex better for everyone.
+**Thank you** to the community members who reported this. Your feedback makes Dex better for everyone.
 
 ---
 
