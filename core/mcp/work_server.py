@@ -114,6 +114,7 @@ QUARTER_GOALS_FILE = BASE_DIR / '01-Quarter_Goals/Quarter_Goals.md'
 GOALS_FILE = BASE_DIR / 'GOALS.md'  # Legacy, kept for compatibility
 INBOX_DIR = BASE_DIR / 'Inbox'
 PILLARS_FILE = BASE_DIR / 'System' / 'pillars.yaml'
+SKILL_RATINGS_FILE = BASE_DIR / 'System' / 'Skill_Ratings' / 'ratings.jsonl'
 COMPANIES_DIR = BASE_DIR / 'Active' / 'Relationships' / 'Companies'
 PEOPLE_DIR = BASE_DIR / 'People'
 MEETINGS_DIR = BASE_DIR / 'Inbox' / 'Meetings'
@@ -3350,6 +3351,29 @@ async def handle_list_tools() -> list[types.Tool]:
             description="Rebuild the meeting context cache from meeting notes. Parses all recent meetings and writes System/Memory/meeting-cache.json.",
             inputSchema={"type": "object", "properties": {}}
         ),
+        types.Tool(
+            name="capture_skill_rating",
+            description="Capture a quality rating (1-5) for a skill after it completes. Appends to System/Skill_Ratings/ratings.jsonl for trend tracking.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "skill_name": {"type": "string", "description": "Name of the skill (e.g., 'daily-plan', 'meeting-prep')"},
+                    "rating": {"type": "integer", "minimum": 1, "maximum": 5, "description": "Quality rating 1-5"},
+                    "note": {"type": "string", "description": "Optional note about what was good or bad"}
+                },
+                "required": ["skill_name", "rating"]
+            }
+        ),
+        types.Tool(
+            name="get_skill_ratings",
+            description="Get quality ratings and trends for skills. Returns averages, recent ratings, and trend direction.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "skill_name": {"type": "string", "description": "Filter to a specific skill (omit for all skills)"}
+                }
+            }
+        ),
     ]
 
 # Tools that write to vault files and should trigger search index refresh
@@ -3358,7 +3382,7 @@ WRITE_TOOLS = {
     "sync_task_refs", "create_quarterly_goal", "update_goal_progress",
     "create_weekly_priority", "complete_weekly_priority",
     "process_inbox_with_dedup", "migrate_quarterly_goals", "migrate_weekly_priorities",
-    "build_people_index", "rebuild_meeting_cache",
+    "build_people_index", "rebuild_meeting_cache", "capture_skill_rating",
 }
 
 @app.call_tool()
@@ -4726,6 +4750,90 @@ async def _handle_call_tool_inner(
     elif name == "rebuild_meeting_cache":
         result = rebuild_meeting_cache_data()
         return [types.TextContent(type="text", text=json.dumps(result, indent=2, cls=DateTimeEncoder))]
+
+    elif name == "capture_skill_rating":
+        skill_name = arguments.get('skill_name', '')
+        rating = arguments.get('rating', 0)
+        note = arguments.get('note', '')
+
+        if not skill_name:
+            return [types.TextContent(type="text", text=json.dumps({"success": False, "error": "skill_name is required"}))]
+        if not (1 <= rating <= 5):
+            return [types.TextContent(type="text", text=json.dumps({"success": False, "error": "rating must be 1-5"}))]
+
+        SKILL_RATINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+        entry = {
+            "ts": datetime.now().isoformat(timespec='seconds'),
+            "skill": skill_name,
+            "rating": rating,
+        }
+        if note:
+            entry["note"] = note
+
+        with open(SKILL_RATINGS_FILE, 'a') as f:
+            f.write(json.dumps(entry) + '\n')
+
+        # Fire analytics event (anonymous, consent-checked)
+        try:
+            _fire_analytics_event('skill_rated', {
+                'skill_name': skill_name,
+                'rating': rating,
+            })
+        except Exception:
+            pass
+
+        return [types.TextContent(type="text", text=json.dumps({
+            "success": True,
+            "message": f"Rated {skill_name}: {rating}/5" + (f" — {note}" if note else ""),
+            "entry": entry
+        }, indent=2))]
+
+    elif name == "get_skill_ratings":
+        skill_filter = arguments.get('skill_name', '') if arguments else ''
+
+        if not SKILL_RATINGS_FILE.exists():
+            return [types.TextContent(type="text", text=json.dumps({"ratings": {}, "message": "No ratings captured yet"}))]
+
+        ratings_by_skill = {}
+        for line in SKILL_RATINGS_FILE.read_text().strip().split('\n'):
+            if not line.strip():
+                continue
+            try:
+                entry = json.loads(line)
+                skill = entry.get('skill', 'unknown')
+                if skill_filter and skill != skill_filter:
+                    continue
+                if skill not in ratings_by_skill:
+                    ratings_by_skill[skill] = []
+                ratings_by_skill[skill].append(entry)
+            except json.JSONDecodeError:
+                continue
+
+        result = {}
+        for skill, entries in ratings_by_skill.items():
+            ratings_list = [e['rating'] for e in entries]
+            recent_5 = entries[-5:]
+            recent_ratings = [e['rating'] for e in recent_5]
+
+            trend = "stable"
+            if len(ratings_list) >= 4:
+                mid = len(ratings_list) // 2
+                first_half = sum(ratings_list[:mid]) / mid
+                second_half = sum(ratings_list[mid:]) / (len(ratings_list) - mid)
+                if second_half - first_half > 0.3:
+                    trend = "improving"
+                elif first_half - second_half > 0.3:
+                    trend = "declining"
+
+            result[skill] = {
+                "average": round(sum(ratings_list) / len(ratings_list), 1),
+                "count": len(ratings_list),
+                "trend": trend,
+                "recent": [{"rating": e['rating'], "note": e.get('note', ''), "ts": e['ts']} for e in recent_5],
+            }
+
+        return [types.TextContent(type="text", text=json.dumps({"ratings": result}, indent=2, cls=DateTimeEncoder))]
 
     else:
         return [types.TextContent(type="text", text=f"Unknown tool: {name}")]

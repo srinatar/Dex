@@ -839,6 +839,62 @@ Only show if:
 
 ---
 
+## Integration Discovery (Contextual)
+
+**Trigger:** Run this check if the vault is < 7 days old AND few or no integrations are connected.
+
+### When to Check
+
+After completing the main pathway flow (A, B, or C) but before showing the completion message:
+
+1. Read `System/integrations/config.yaml` (if it exists)
+2. Count how many integrations have `enabled: true` (exclude `slack` since it's a default)
+3. If connected integrations <= 1 AND vault age < 7 days, run the concierge
+
+### How to Run
+
+Execute the integration concierge:
+```bash
+node .claude/hooks/integration-concierge.cjs
+```
+
+Parse the JSON output for `high_value` and `moderate_value` recommendations.
+
+### Presenting Recommendations
+
+**Only surface high_value items** (keep it light — this isn't onboarding, it's a nudge).
+
+For each high_value integration found:
+
+```
+By the way, I noticed you mention **[shortName]** in a few places
+([mentions] references across files like [first example file]).
+
+Connecting it would give you: [value proposition]
+
+Setup takes [setupTime]. Want to connect it now?
+```
+
+**If multiple high_value items:**
+
+```
+I also spotted signals for **[shortName2]** and **[shortName3]** in your notes.
+Want to connect any of these? Or run `/integrate-mcp` anytime later.
+```
+
+**Rules:**
+- Maximum 2 integration suggestions (don't overwhelm)
+- Only mention high_value items (score >= 5) — skip moderate and available
+- If user says yes, run the setup skill inline then return to the getting-started completion
+- If user says no/skip/later, move on without pressure
+- Don't show this section if the user already went through integration setup during onboarding Step 8
+
+### Detecting Prior Setup
+
+Check `.onboarding-complete` marker file for an `integrations_offered` flag. If present, skip this section — they already saw integration recommendations during onboarding.
+
+---
+
 ## Completion & Next Steps
 
 After any pathway completes:

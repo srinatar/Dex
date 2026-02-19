@@ -246,7 +246,42 @@ For each completed item:
 
 **If nothing to sync:** Skip silently.
 
-### 5.8 Mobile Capture Check (Dex Inbox)
+### 5.8 Email Intelligence (if Gmail connected)
+
+Check `System/integrations/config.yaml` for `google-workspace.enabled: true`.
+
+If enabled and MCP healthy:
+1. Get unread count and priority emails from monitored labels
+2. Flag emails needing reply (> 48h since received, from key contacts in `05-Areas/People/`)
+3. Surface email threads with today's meeting attendees
+
+Include in plan:
+
+> "Email: [X] unread, [Y] need replies. [Z] threads with today's meeting attendees."
+
+If unhealthy: skip silently (graceful degradation -- no error to user).
+
+### 5.9 Teams Intelligence (if Teams connected)
+
+Check `System/integrations/config.yaml` for `teams.enabled: true`.
+
+If enabled and MCP healthy:
+1. Get unread messages from priority channels
+2. Surface DMs needing response
+3. Check for mentions
+
+Include in plan:
+
+> "**Teams:** [X] unread chats, [Y] mentions. [Z] threads with today's meeting attendees."
+
+If BOTH Slack and Teams enabled:
+- Show both digests, clearly labeled: "**Slack:** ..." and "**Teams:** ..."
+- Deduplicate if the same person appears in both (merge context, label the source)
+- Present side by side in the plan output under a combined "Chat Intelligence" heading
+
+If unhealthy: skip silently (graceful degradation -- no error to user).
+
+### 5.10a Mobile Capture Check (Dex Inbox)
 
 ```
 Use: reminders_list_items(list_name="Dex Inbox")
@@ -271,7 +306,7 @@ If items found, surface:
 
 **If Dex Inbox is empty:** Skip silently (no "0 items captured" noise).
 
-### 5.9 Standard Context Gathering
+### 5.10b Standard Context Gathering
 
 Also gather:
 - **Calendar**: Today's meetings with times and attendees
@@ -501,3 +536,5 @@ The plan works at multiple levels:
 | Granola | dex-granola-mcp | `get_recent_meetings` |
 | Work | dex-work-mcp | `list_tasks`, `get_week_progress`, `get_meeting_context`, `get_commitments_due`, `analyze_calendar_capacity`, `suggest_task_scheduling` |
 | Improvements | dex-improvements-mcp | `synthesize_changelog`, `synthesize_learnings`, `list_ideas` |
+| Google Workspace | google-workspace-mcp | Gmail query, email search (if enabled) |
+| Teams | teams-mcp | `teams_list_chats`, `teams_search_messages`, `teams_health_check` (if enabled) |

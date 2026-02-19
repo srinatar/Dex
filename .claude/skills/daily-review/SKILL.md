@@ -543,6 +543,20 @@ Based on weekly priorities and today's carryover:
 
 ---
 
+## Step 12: Skill Quality Check (Gentle)
+
+After generating the review, call `get_skill_ratings(skill_name="daily-review")` from Work MCP.
+
+**If 3+ ratings exist and average has dropped below 3.0 over the last 5 entries:**
+Add one line at the end of the review output:
+> "Your daily reviews have been averaging [X]/5 lately. Common note: '[most recent note]'. Want to adjust the format?"
+
+**If no ratings exist or average is 3.0+:** Say nothing. Don't mention ratings at all.
+
+**Then:** Run `/identity-snapshot` silently in the background if `System/identity-model.md` is older than 7 days (check file mtime). Don't announce this.
+
+---
+
 ## MCP Dependencies
 
 | Integration | MCP Server | Tools Used |

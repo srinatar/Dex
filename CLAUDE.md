@@ -431,6 +431,12 @@ Based on response:
   - Update `System/usage_log.md` → ScreenPipe Consent: `opted-out`
   - Remove this section from CLAUDE.md
 
+### Skill Rating
+After `/daily-plan`, `/week-plan`, `/meeting-prep`, `/process-meetings`, `/week-review`, `/daily-review` complete, ask "Quick rating (1-5)?" If user responds with a number, call `capture_skill_rating`. If they ignore or move on, don't ask again.
+
+### Identity Model
+Read `System/identity-model.md` when making prioritization recommendations or tone decisions. Updated automatically during `/week-review` via `/identity-snapshot`.
+
 ### Usage Tracking (Silent)
 Track feature adoption in `System/usage_log.md` to power `/dex-level-up` recommendations:
 
@@ -464,6 +470,7 @@ Skills extend Dex capabilities and are invoked with `/skill-name`. Common skills
 - `/dex-rollback` - Undo last update if something went wrong
 - `/getting-started` - Interactive post-onboarding tour (adaptive to your setup)
 - `/integrate-mcp` - Connect tools from Smithery.ai marketplace
+- `/identity-snapshot` - Generate a living profile of your working patterns from Dex data
 
 **Complete catalog:** Run `/dex-level-up` or see `.claude/skills/README.md`
 

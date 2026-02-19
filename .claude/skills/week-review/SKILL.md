@@ -198,6 +198,31 @@ Use: get_commitment_stats(
 **If no commitment data:**
 Skip this section silently (user may not have ScreenPipe or commitment detection enabled).
 
+### 5.8 Email Communication Stats (if Gmail connected)
+
+Check `System/integrations/config.yaml` for `google-workspace.enabled: true`.
+
+If enabled and Google Workspace MCP is healthy:
+- **Emails sent this week** — count of sent messages in the review period
+- **Average response time** — how quickly you replied to incoming emails
+- **Threads still open** — conversations with no resolution (back-and-forth still active)
+- **Follow-up detection** — emails waiting > 48h for a reply from you or from others
+
+Surface in the review:
+
+> "**Email this week:**
+>
+> | Metric | Value |
+> |--------|-------|
+> | Emails sent | 47 |
+> | Avg response time | 3.2 hours |
+> | Open threads | 12 |
+> | Awaiting your reply (> 48h) | 3 |
+>
+> **Observation:** You have 3 emails waiting for replies longer than 48 hours. Consider clearing those early next week."
+
+If unhealthy or not enabled: skip this section silently.
+
 ### 6. Learning Compilation & Pattern Detection
 
 Review `System/Session_Learnings/` files from this week:
@@ -412,6 +437,27 @@ Your AI-curated backlog has surfaced these high-impact ideas:
 - If fewer than 3 qualifying ideas, show however many exist
 - If no qualifying ideas, skip this section entirely
 - This is a gentle nudge, not a sales pitch
+
+---
+
+## Skill Quality Insights
+
+After generating the synthesis, call `get_skill_ratings()` from Work MCP (no filter — get all skills).
+
+**If ratings exist for any skills:**
+Add a section to the review:
+
+```markdown
+## Skill Quality This Week
+
+| Skill | Avg Rating | Trend | Note |
+|-------|-----------|-------|------|
+| [skill] | [avg]/5 | [improving/stable/declining] | [most recent note] |
+```
+
+**Only surface skills that are declining or below 3.0.** If everything is stable/good, skip this section entirely. One line for healthy, only details for problems.
+
+**Then:** Run `/identity-snapshot` to update `System/identity-model.md` with fresh data from this week.
 
 ---
 

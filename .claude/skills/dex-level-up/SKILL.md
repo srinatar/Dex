@@ -139,7 +139,74 @@ When user says "install [skill]" or "install all":
 
 ---
 
-## Step 3: Generate Recommendations
+## Step 3: Integration Discovery
+
+Check for connected integrations and surface opportunities the user may be missing.
+
+### Unused Capabilities (Already Connected)
+
+Read `System/integrations/config.yaml` and check each enabled integration for underutilized features:
+
+**For each enabled integration, check if all capabilities are active:**
+
+- **Gmail connected** but `email_followup: false`?
+  → "You have Gmail connected but haven't enabled follow-up detection. It flags emails waiting for replies — useful in `/daily-plan`."
+
+- **Gmail connected** but `newsletter_digest: false`?
+  → "Gmail is connected but newsletter digests aren't enabled. It summarizes your morning newsletters so you can skim instead of read."
+
+- **Todoist/Things connected** but `/process-inbox` doesn't route to it?
+  → "You have [Tool] connected but inbox processing doesn't route tasks to it yet. Want to enable two-way sync so tasks land in both places?"
+
+- **Jira connected** but `sprint_tracking: false`?
+  → "Jira is connected but sprint tracking isn't active. It would pull sprint items into your `/daily-plan`."
+
+- **Zoom connected** but Granola also active?
+  → "You have both Zoom and Granola — Granola already captures meetings. Zoom's main added value is scheduling. Working as expected?"
+
+Present any findings as a section:
+
+```markdown
+## Untapped Integration Features
+
+You have [X] integrations connected. Here are features you haven't turned on yet:
+
+- **Gmail follow-up detection** — Surfaces emails waiting for replies in your daily plan.
+  → Enable: Edit `System/integrations/config.yaml` → `google-workspace.email_followup: true`
+
+- **[Other unused feature]** — [Brief value prop].
+  → Enable: [Specific instruction]
+```
+
+If all features of all connected integrations are active, skip this section.
+
+### Missing Integrations (Not Connected)
+
+Run the integration concierge to check for tool signals in the vault:
+
+```bash
+node .claude/hooks/integration-concierge.cjs
+```
+
+Parse the JSON output. If `high_value` items are found that aren't already connected:
+
+```markdown
+## Tool Connections You Might Want
+
+I scanned your notes and found references to tools you haven't connected:
+
+- **[Name]** — [mentions] references across your notes ([example files])
+  → [value proposition]
+  → Connect with `[setup command]` ([setupTime] setup)
+
+[Repeat for each high_value item, max 3]
+```
+
+If no high_value items found, skip this section entirely. Don't show moderate or available items here — keep `/dex-level-up` focused on high-signal recommendations only.
+
+---
+
+## Step 4: Generate Recommendations
 
 Show **2-3 specific, actionable suggestions** ranked by:
 
@@ -165,7 +232,7 @@ For each suggestion:
 
 ---
 
-## Step 4: Present Recommendations
+## Step 5: Present Recommendations
 
 Display in this format:
 
@@ -211,7 +278,7 @@ Just say the number or feature name, and I'll guide you through it.
 
 ---
 
-## Step 5: Track Adoption (Silent)
+## Step 6: Track Adoption (Silent)
 
 When user tries a recommended feature, silently update `System/usage_log.md` by checking the box for that feature.
 

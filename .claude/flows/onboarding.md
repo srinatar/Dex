@@ -373,9 +373,113 @@ The MCP returns a summary of what was created (folders, files, configs).
 
 Show the summary from the MCP response.
 
-## Step 8: Optional Features
+## Step 8: Connect Your Tools (Integration Discovery)
 
-Say: "The core system is ready. A couple optional add-ons you can set up now or skip:
+**This step uses the Integration Concierge to intelligently recommend tool connections based on what's already in the user's vault.**
+
+### 8a: Run Integration Concierge
+
+Execute the vault scanner to detect tool signals:
+
+```bash
+node .claude/hooks/integration-concierge.cjs
+```
+
+Parse the JSON output. It returns four tiers:
+- `high_value` — Strong signals (score >= 5), high-confidence recommendations
+- `moderate_value` — Some signals (score 1-4), worth mentioning
+- `available` — No signals but available for connection
+- `already_connected` — Already enabled in config.yaml
+
+### 8b: Present Recommendations
+
+Say: "Now the fun part — I just scanned your vault to see what tools you use."
+
+**IF high_value integrations found:**
+
+```
+**Based on your notes, these would make the biggest difference:**
+
+[For each high_value item:]
+- **[name]** — Found [mentions] references in your notes ([list example files])
+  → [value proposition]
+  Setup time: [setupTime] | Auth: [auth type]
+  [If item has a note field, show it as an italicized aside]
+
+[IF moderate_value also found:]
+**Also available (fewer signals, but useful):**
+[For each moderate_value item:]
+- **[shortName]** — [mentions] mention(s). [value proposition]. Setup: [setupTime]
+
+[IF available items:]
+**Other integrations you can add anytime:**
+[Comma-separated list of shortNames from available items]
+```
+
+**IF NO high_value found but moderate_value found:**
+
+```
+**I found a few tool signals in your notes:**
+
+[For each moderate_value item:]
+- **[name]** — [mentions] mention(s) in your notes
+  → [value proposition]
+  Setup time: [setupTime] | Auth: [auth type]
+
+**Other integrations available anytime:**
+[Comma-separated list of shortNames from available items]
+```
+
+**IF NO signals found at all (both high_value and moderate_value empty):**
+
+```
+**Here are the integrations available, organized by category:**
+
+**Communication & Email:**
+- Google Workspace (Gmail + Calendar + Docs) — Email digest, follow-up detection. Setup: 3 min
+- Microsoft Teams — Teams digest alongside Slack. Setup: 2 min
+
+**Task Management:**
+- Todoist — Two-way task sync. Setup: 1 min
+- Things 3 — Mac-native task sync, no account needed. Setup: 30 sec
+- Trello — Board sync, cards become tasks. Setup: 2 min
+
+**Meetings & Knowledge:**
+- Zoom — Recording access and scheduling. Setup: 2 min
+- Atlassian (Jira + Confluence) — Tickets and docs in daily plans. Setup: 3 min
+```
+
+**IF already_connected items exist, mention them:**
+
+```
+**Already connected:** [comma-separated list of shortNames]
+```
+
+**Then ask:**
+
+"Which ones would you like to connect? You can always add more later with `/integrate-mcp` or individual setup commands."
+
+### 8c: Connect Selected Integrations
+
+For each integration the user selects:
+
+1. Run its setup skill: invoke the skill referenced in the integration's `setup` field (e.g., `/todoist-setup`, `/gmail-setup`)
+2. Wait for the setup skill to complete (each includes auth, config, and verification)
+3. The setup skill shows its **Capability Cascade** at the end (from `integration-patterns.md`):
+   - Which existing skills just got smarter
+   - What new capabilities are now available
+   - Privacy and trust level summary
+4. Move to the next selected integration
+
+If the user selects multiple, run them in sequence. After each one, confirm success before moving to the next.
+
+If the user says "skip" or "none" or "later":
+
+Say: "No problem! You can connect tools anytime with `/integrate-mcp` or the individual setup commands. Run `/dex-level-up` to see what's available."
+
+### 8d: Optional Features (After Integrations)
+
+Say: "A couple more optional add-ons:
 
 - **Journaling** — Daily/weekly reflection prompts (2-3 min/day)
 - **Granola** — Automatic meeting processing (if you use it)

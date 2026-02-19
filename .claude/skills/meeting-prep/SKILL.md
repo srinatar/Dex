@@ -152,17 +152,49 @@ Include in prep:
 - Any commitments made
 ```
 
-**Google Integration:**
-If `enabled.google: true` AND Google MCP is available:
+**Teams Integration:**
+If `teams.enabled: true` AND Teams MCP available:
 ```
-Search Gmail for recent threads:
-- With each attendee
-- About meeting topics
+Search Teams chats with attendees:
+- Recent 1:1 and group chats involving each attendee
+- Mentioning the meeting topic
+
+Check Teams channels related to meeting topic:
+- Project channels, department channels
+- Recent posts and replies
+
+Surface recent decisions from Teams threads:
+- Key decisions made in channel conversations
+- Any commitments or follow-ups from Teams chats
 
 Include in prep:
-- Email thread summaries
-- Outstanding requests
-- Shared documents mentioned
+- Recent Teams context (last 7 days)
+- Key threads or decisions from channels
+- Any commitments made in Teams chats
+```
+
+**When BOTH Slack and Teams are enabled:**
+- Check both sources for each attendee
+- Label context by source: "**From Slack:**" / "**From Teams:**"
+- Deduplicate if the same person appears in both (merge context, label the source)
+- Present in separate sub-sections under Integration Context
+
+**Google Workspace Integration:**
+If `google-workspace.enabled: true` AND Google Workspace MCP is available:
+```
+Search Gmail for recent threads with each attendee (last 7 days):
+- Email exchanges and their topics
+- Shared Google Docs mentioned in threads
+- Outstanding email requests (sent but no reply)
+
+Search for Google Docs related to:
+- Meeting topic ($MEETING)
+- Shared documents with attendees
+
+Include in prep:
+- Recent email exchanges (last 7 days) — key threads summarized
+- Shared documents — Google Docs, Sheets, or Slides linked in emails
+- Outstanding requests/follow-ups — emails waiting > 48h for reply
 ```
 
 **Graceful Degradation:**
@@ -236,7 +268,10 @@ Previous meetings with these attendees:
 ### From Slack
 > Recent conversation context with attendees (last 7 days)
 
-### From Notion  
+### From Teams
+> Recent Teams chats and channel threads with attendees (last 7 days)
+
+### From Notion
 > Related Notion docs: [Doc title](link)
 
 ### From Gmail
