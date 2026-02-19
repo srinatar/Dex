@@ -44,6 +44,12 @@ if [[ -f "$ONBOARDING_MARKER" ]]; then
         fi
     fi
 
+    # Build meeting cache (incremental — skips unchanged files)
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    if [[ -f "$SCRIPT_DIR/meeting-cache-builder.cjs" ]]; then
+        node "$SCRIPT_DIR/meeting-cache-builder.cjs" 2>/dev/null &
+    fi
+
     # Wait briefly for checks to complete (but don't block session start)
     sleep 0.1
 fi

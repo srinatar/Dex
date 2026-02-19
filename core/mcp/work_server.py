@@ -117,6 +117,8 @@ PILLARS_FILE = BASE_DIR / 'System' / 'pillars.yaml'
 COMPANIES_DIR = BASE_DIR / 'Active' / 'Relationships' / 'Companies'
 PEOPLE_DIR = BASE_DIR / 'People'
 MEETINGS_DIR = BASE_DIR / 'Inbox' / 'Meetings'
+PEOPLE_INDEX_FILE = BASE_DIR / 'System' / 'People_Index.json'
+MEETING_CACHE_FILE = BASE_DIR / 'System' / 'Memory' / 'meeting-cache.json'
 
 # Demo Mode Configuration
 USER_PROFILE_FILE = BASE_DIR / 'System' / 'user-profile.yaml'
@@ -787,6 +789,363 @@ def get_company_domains(company_filepath: Path) -> List[str]:
                 break
     
     return domains
+
+# ============================================================================
+# PEOPLE DIRECTORY INDEX
+# ============================================================================
+
+def _resolve_people_dir() -> Path:
+    """Resolve the actual People directory, checking both possible locations."""
+    standard = get_people_dir()
+    if standard.exists() and any(standard.iterdir()):
+        return standard
+    para = BASE_DIR / '05-Areas' / 'People'
+    if para.exists():
+        return para
+    return standard
+
+
+def build_people_index_data() -> Dict[str, Any]:
+    """Scan all person pages and build a lightweight JSON index."""
+    people_dir = _resolve_people_dir()
+    entries = []
+
+    for subdir_name in ['Internal', 'External', 'CPO_Network']:
+        subdir = people_dir / subdir_name
+        if not subdir.exists():
+            continue
+
+        for person_file in subdir.glob('*.md'):
+            if person_file.name == 'README.md':
+                continue
+            person = parse_person_page(person_file)
+
+            # Determine populated vs stub
+            content = person_file.read_text()
+            has_content = bool(person.get('role') or person.get('email') or
+                            '## Meeting' in content or '## Notes' in content)
+
+            # Extract tags from content
+            tags = []
+            for line in content.split('\n'):
+                if '**Tags**' in line and '|' in line:
+                    parts = line.split('|')
+                    if len(parts) >= 3:
+                        tags = [t.strip() for t in parts[2].strip().split(',') if t.strip()]
+                    break
+
+            entries.append({
+                'name': person.get('name', person_file.stem.replace('_', ' ')),
+                'company': person.get('company'),
+                'role': person.get('role'),
+                'email': person.get('email'),
+                'type': subdir_name.lower(),
+                'path': str(person_file.relative_to(BASE_DIR)),
+                'last_interaction': person.get('last_interaction'),
+                'tags': tags,
+                'status': 'populated' if has_content else 'stub',
+            })
+
+    index = {
+        'version': 1,
+        'built_at': datetime.now().isoformat(),
+        'total': len(entries),
+        'by_type': {
+            'internal': sum(1 for e in entries if e['type'] == 'internal'),
+            'external': sum(1 for e in entries if e['type'] == 'external'),
+            'cpo_network': sum(1 for e in entries if e['type'] == 'cpo_network'),
+        },
+        'people': entries,
+    }
+
+    # Write to file
+    PEOPLE_INDEX_FILE.parent.mkdir(parents=True, exist_ok=True)
+    PEOPLE_INDEX_FILE.write_text(json.dumps(index, indent=2, cls=DateTimeEncoder) + '\n')
+
+    return index
+
+
+def lookup_person_data(name: str, company: str = None) -> Dict[str, Any]:
+    """Fast person lookup using the index with fuzzy matching."""
+
+    # Try reading the index file
+    index = None
+    if PEOPLE_INDEX_FILE.exists():
+        try:
+            index = json.loads(PEOPLE_INDEX_FILE.read_text())
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    # If no index, fall back to scanning files directly
+    if not index:
+        index = build_people_index_data()
+
+    people = index.get('people', [])
+    name_lower = name.lower()
+
+    matches = []
+    for person in people:
+        person_name = person.get('name', '').lower()
+        # Exact substring match
+        if name_lower in person_name or person_name in name_lower:
+            score = 1.0 if name_lower == person_name else 0.8
+        else:
+            # Fuzzy match using SequenceMatcher
+            score = SequenceMatcher(None, name_lower, person_name).ratio()
+
+        if score >= 0.5:
+            # Apply company filter if provided
+            if company:
+                person_company = (person.get('company') or '').lower()
+                if company.lower() not in person_company:
+                    continue
+
+            matches.append({**person, '_score': round(score, 2)})
+
+    # Sort by score descending
+    matches.sort(key=lambda m: m['_score'], reverse=True)
+
+    return {
+        'query': name,
+        'company_filter': company,
+        'matches': matches[:10],
+        'total_matches': len(matches),
+        'index_age': index.get('built_at'),
+    }
+
+
+# ============================================================================
+# MEETING CONTEXT CACHE
+# ============================================================================
+
+def load_meeting_cache() -> Optional[Dict[str, Any]]:
+    """Load the meeting cache JSON file, return None if not available."""
+    if not MEETING_CACHE_FILE.exists():
+        return None
+    try:
+        return json.loads(MEETING_CACHE_FILE.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def query_meeting_cache_data(
+    attendee: str = None,
+    company: str = None,
+    date_from: str = None,
+    date_to: str = None,
+    keyword: str = None,
+) -> Dict[str, Any]:
+    """Query the meeting cache with filters."""
+    cache = load_meeting_cache()
+    if not cache:
+        return {
+            'meetings': [],
+            'total': 0,
+            'cache_available': False,
+            'guidance': 'No meeting cache found. Run the meeting cache builder: node .claude/hooks/meeting-cache-builder.cjs',
+        }
+
+    meetings = cache.get('meetings', [])
+    filtered = []
+
+    for m in meetings:
+        # Attendee filter (fuzzy name match)
+        if attendee:
+            attendee_lower = attendee.lower()
+            attendee_names = [a.lower() for a in (m.get('attendees') or [])]
+            if not any(attendee_lower in a or a in attendee_lower for a in attendee_names):
+                continue
+
+        # Company filter
+        if company:
+            meeting_company = (m.get('company') or '').lower()
+            if company.lower() not in meeting_company:
+                continue
+
+        # Date range filter
+        meeting_date = m.get('date')
+        if date_from and meeting_date and meeting_date < date_from:
+            continue
+        if date_to and meeting_date and meeting_date > date_to:
+            continue
+
+        # Keyword filter (searches key_points, decisions, title)
+        if keyword:
+            keyword_lower = keyword.lower()
+            searchable = ' '.join([
+                m.get('title', ''),
+                ' '.join(m.get('key_points', [])),
+                ' '.join(m.get('decisions', [])),
+                ' '.join(m.get('action_items', [])),
+            ]).lower()
+            if keyword_lower not in searchable:
+                continue
+
+        filtered.append(m)
+
+    return {
+        'meetings': filtered,
+        'total': len(filtered),
+        'cache_available': True,
+        'cache_last_updated': cache.get('last_updated'),
+        'cache_total_meetings': len(meetings),
+    }
+
+
+def rebuild_meeting_cache_data() -> Dict[str, Any]:
+    """Rebuild the meeting cache by parsing meeting files in Python."""
+    meetings_dir = get_meetings_dir()
+    if not meetings_dir.exists():
+        return {'success': False, 'error': 'No meetings directory found'}
+
+    files = [f for f in meetings_dir.glob('*.md') if f.name != 'README.md']
+    if not files:
+        return {'success': False, 'error': 'No meeting files found'}
+
+    # Load existing cache for mtime tracking
+    cache = load_meeting_cache() or {
+        'version': 1,
+        'last_updated': None,
+        'meetings': [],
+        '_file_mtimes': {},
+    }
+
+    prune_cutoff = (datetime.now() - timedelta(days=90)).strftime('%Y-%m-%d')
+
+    # Build lookup of existing entries
+    existing_by_source = {}
+    for i, m in enumerate(cache['meetings']):
+        existing_by_source[m.get('source_file', '')] = i
+
+    processed = 0
+    skipped = 0
+
+    for filepath in files:
+        rel_path = str(filepath.relative_to(BASE_DIR))
+        mtime_ms = filepath.stat().st_mtime_ns / 1_000_000
+
+        # Skip files older than prune threshold based on filename date
+        date_match = re.search(r'(\d{4}-\d{2}-\d{2})', filepath.name)
+        if date_match and date_match.group(1) < prune_cutoff:
+            skipped += 1
+            continue
+
+        # Skip unchanged files
+        cached_mtime = cache.get('_file_mtimes', {}).get(rel_path)
+        if cached_mtime and abs(cached_mtime - mtime_ms) < 1000:
+            skipped += 1
+            continue
+
+        try:
+            content = filepath.read_text()
+            entry = _parse_meeting_file_python(content, filepath.name, rel_path)
+
+            idx = existing_by_source.get(rel_path)
+            if idx is not None:
+                cache['meetings'][idx] = entry
+            else:
+                cache['meetings'].append(entry)
+                existing_by_source[rel_path] = len(cache['meetings']) - 1
+
+            cache.setdefault('_file_mtimes', {})[rel_path] = mtime_ms
+            processed += 1
+        except Exception:
+            skipped += 1
+
+    # Prune old entries
+    cache['meetings'] = [m for m in cache['meetings']
+                         if not m.get('date') or m['date'] >= prune_cutoff]
+
+    # Sort by date descending
+    cache['meetings'].sort(key=lambda m: m.get('date', ''), reverse=True)
+
+    # Save
+    cache['last_updated'] = datetime.now().isoformat()
+    MEETING_CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    MEETING_CACHE_FILE.write_text(json.dumps(cache, indent=2) + '\n')
+
+    return {
+        'success': True,
+        'processed': processed,
+        'skipped': skipped,
+        'total_cached': len(cache['meetings']),
+    }
+
+
+def _parse_meeting_file_python(content: str, filename: str, rel_path: str) -> Dict[str, Any]:
+    """Parse a single meeting file into a cache entry (Python implementation)."""
+
+    # Frontmatter
+    fm = {}
+    fm_match = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
+    if fm_match:
+        for line in fm_match.group(1).split('\n'):
+            kv = re.match(r'^(\w+):\s*(.+)', line)
+            if kv:
+                val = kv.group(2).strip().strip('"')
+                if val.startswith('[') and val.endswith(']'):
+                    val = [s.strip() for s in val[1:-1].split(',') if s.strip()]
+                fm[kv.group(1)] = val
+
+    # Date
+    date_val = fm.get('date') or fm.get('created')
+    if not date_val:
+        dm = re.search(r'(\d{4}-\d{2}-\d{2})', filename)
+        date_val = dm.group(1) if dm else None
+    if date_val and not isinstance(date_val, str):
+        date_val = str(date_val)
+
+    # Title
+    title_match = re.search(r'^# (.+)$', content, re.MULTILINE)
+    title = title_match.group(1).strip() if title_match else (
+        re.sub(r'\.md$', '', re.sub(r'^\d{4}-\d{2}-\d{2}\s*-?\s*', '', filename)).strip()
+    )
+
+    # Attendees
+    attendees = fm.get('participants') or fm.get('attendees') or []
+    if isinstance(attendees, str):
+        attendees = [s.strip() for s in attendees.split(',')]
+
+    # Sections
+    def extract_section(heading):
+        pattern = rf'^## {re.escape(heading)}\b.*$'
+        match = re.search(pattern, content, re.MULTILINE | re.IGNORECASE)
+        if not match:
+            return []
+        start = match.end()
+        end_match = re.search(r'^## ', content[start:], re.MULTILINE)
+        block = content[start:start + end_match.start()] if end_match else content[start:]
+        items = []
+        for line in block.split('\n'):
+            stripped = line.strip()
+            if stripped.startswith('- '):
+                item = stripped[2:].strip()
+                item = re.sub(r'^\[[ x]\]\s*', '', item)
+                item = re.sub(r'\s*\^task-\d{8}-\d{3}\s*$', '', item)
+                item = re.sub(r'\[\[[^\]|]*\|([^\]]*)\]\]', r'\1', item)
+                item = re.sub(r'\[\[([^\]]*)\]\]', r'\1', item)
+                item = re.sub(r'\*\*([^*]+)\*\*', r'\1', item)
+                if item:
+                    items.append(item)
+        return items
+
+    decisions = extract_section('Decisions') or extract_section('Key Decisions')
+    action_items = extract_section('Action Items')
+    key_points = extract_section('Key Points') or extract_section('Summary')
+
+    return {
+        'date': date_val,
+        'title': title,
+        'source_file': rel_path,
+        'attendees': attendees,
+        'company': fm.get('company'),
+        'decisions': decisions,
+        'action_items': action_items,
+        'key_points': key_points,
+        'sentiment': 'neutral',
+        'cached_at': datetime.now().isoformat(),
+    }
+
 
 def find_meetings_for_company(company_name: str, domains: List[str]) -> List[Dict[str, Any]]:
     """Find meetings that involve people from a company"""
@@ -2142,10 +2501,37 @@ def get_meeting_context_data(meeting_title: str = None, attendees: List[str] = N
         'recent_meetings': [],
         'prep_suggestions': []
     }
-    
+
     if not attendees:
         return result
-    
+
+    # --- Cache-first: pull recent meetings from meeting cache ---
+    cache = load_meeting_cache()
+    if cache:
+        for attendee in attendees:
+            attendee_lower = attendee.lower()
+            for m in cache.get('meetings', []):
+                cached_attendees = [a.lower() for a in (m.get('attendees') or [])]
+                if any(attendee_lower in a or a in attendee_lower for a in cached_attendees):
+                    result['recent_meetings'].append({
+                        'date': m.get('date'),
+                        'title': m.get('title'),
+                        'source_file': m.get('source_file'),
+                        'decisions': m.get('decisions', []),
+                        'action_items': m.get('action_items', []),
+                        'key_points': m.get('key_points', []),
+                        'sentiment': m.get('sentiment'),
+                    })
+        # Deduplicate by source_file
+        seen = set()
+        deduped = []
+        for m in result['recent_meetings']:
+            sf = m.get('source_file', '')
+            if sf not in seen:
+                seen.add(sf)
+                deduped.append(m)
+        result['recent_meetings'] = deduped[:10]
+
     # Find related project
     if meeting_title or attendees:
         result['related_project'] = find_project_for_meeting(attendees, meeting_title or '')
@@ -2221,7 +2607,10 @@ def get_meeting_context_data(meeting_title: str = None, attendees: List[str] = N
     
     if result['semantic_context']:
         result['prep_suggestions'].append(f"Review {len(result['semantic_context'])} related past discussions (semantic match)")
-    
+
+    if result['recent_meetings']:
+        result['prep_suggestions'].append(f"Review {len(result['recent_meetings'])} recent cached meetings with these attendees")
+
     return result
 
 
@@ -2924,7 +3313,43 @@ async def handle_list_tools() -> list[types.Tool]:
                     }
                 }
             }
-        )
+        ),
+        types.Tool(
+            name="build_people_index",
+            description="Scan all person pages and build a lightweight JSON index at System/People_Index.json. Run periodically or when person pages change.",
+            inputSchema={"type": "object", "properties": {}}
+        ),
+        types.Tool(
+            name="lookup_person",
+            description="Fast person lookup using the People Directory index. Fuzzy name matching with optional company filter. Falls back to file scan if index doesn't exist.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "Person name to search for (fuzzy match)"},
+                    "company": {"type": "string", "description": "Optional company name filter"}
+                },
+                "required": ["name"]
+            }
+        ),
+        types.Tool(
+            name="query_meeting_cache",
+            description="Query the meeting context cache for fast meeting lookup. Returns cached decisions, action items, and key points (~50 tokens each vs 2,000 for full notes).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "attendee": {"type": "string", "description": "Filter by attendee name (fuzzy match)"},
+                    "company": {"type": "string", "description": "Filter by company name"},
+                    "date_from": {"type": "string", "description": "Start date filter (YYYY-MM-DD)"},
+                    "date_to": {"type": "string", "description": "End date filter (YYYY-MM-DD)"},
+                    "keyword": {"type": "string", "description": "Search key_points, decisions, and action_items"}
+                }
+            }
+        ),
+        types.Tool(
+            name="rebuild_meeting_cache",
+            description="Rebuild the meeting context cache from meeting notes. Parses all recent meetings and writes System/Memory/meeting-cache.json.",
+            inputSchema={"type": "object", "properties": {}}
+        ),
     ]
 
 # Tools that write to vault files and should trigger search index refresh
@@ -2933,6 +3358,7 @@ WRITE_TOOLS = {
     "sync_task_refs", "create_quarterly_goal", "update_goal_progress",
     "create_weekly_priority", "complete_weekly_priority",
     "process_inbox_with_dedup", "migrate_quarterly_goals", "migrate_weekly_priorities",
+    "build_people_index", "rebuild_meeting_cache",
 }
 
 @app.call_tool()
@@ -4233,44 +4659,74 @@ async def _handle_call_tool_inner(
     elif name == "suggest_task_scheduling":
         include_all = arguments.get('include_all_tasks', False) if arguments else False
         calendar_events = arguments.get('calendar_events', []) if arguments else []
-        
+
         # Get tasks
         all_tasks = get_all_tasks()
         active_tasks = [t for t in all_tasks if not t.get('completed')]
-        
+
         # Filter by priority if not including all
         if not include_all:
             active_tasks = [t for t in active_tasks if t.get('priority', 'P2') in ['P0', 'P1']]
-        
+
         # Get calendar capacity (use events if provided, otherwise use basic structure)
         if calendar_events:
             today = _tz_today()
             days_data = []
-            
+
             events_by_date = {}
             for event in calendar_events:
                 event_date = event.get('date', today.isoformat())
                 if event_date not in events_by_date:
                     events_by_date[event_date] = []
                 events_by_date[event_date].append(event)
-            
+
             for i in range(5):
                 target_date = today + timedelta(days=i)
                 if target_date.weekday() >= 5:
                     continue
-                
+
                 date_str = target_date.isoformat()
                 day_events = events_by_date.get(date_str, [])
                 day_analysis = analyze_day_capacity(day_events, target_date)
                 days_data.append(day_analysis)
-            
+
             calendar_capacity = {'days': days_data}
         else:
             calendar_capacity = get_calendar_capacity_data(5)
-        
+
         result = generate_scheduling_suggestions(active_tasks, calendar_capacity)
         return [types.TextContent(type="text", text=json.dumps(result, indent=2, cls=DateTimeEncoder))]
-    
+
+    elif name == "build_people_index":
+        result = build_people_index_data()
+        return [types.TextContent(type="text", text=json.dumps({
+            'success': True,
+            'total': result['total'],
+            'by_type': result['by_type'],
+            'index_path': str(PEOPLE_INDEX_FILE),
+            'built_at': result['built_at'],
+        }, indent=2))]
+
+    elif name == "lookup_person":
+        person_name = arguments['name']
+        company_filter = arguments.get('company')
+        result = lookup_person_data(person_name, company_filter)
+        return [types.TextContent(type="text", text=json.dumps(result, indent=2, cls=DateTimeEncoder))]
+
+    elif name == "query_meeting_cache":
+        result = query_meeting_cache_data(
+            attendee=arguments.get('attendee') if arguments else None,
+            company=arguments.get('company') if arguments else None,
+            date_from=arguments.get('date_from') if arguments else None,
+            date_to=arguments.get('date_to') if arguments else None,
+            keyword=arguments.get('keyword') if arguments else None,
+        )
+        return [types.TextContent(type="text", text=json.dumps(result, indent=2, cls=DateTimeEncoder))]
+
+    elif name == "rebuild_meeting_cache":
+        result = rebuild_meeting_cache_data()
+        return [types.TextContent(type="text", text=json.dumps(result, indent=2, cls=DateTimeEncoder))]
+
     else:
         return [types.TextContent(type="text", text=f"Unknown tool: {name}")]
 

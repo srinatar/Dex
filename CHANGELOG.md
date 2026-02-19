@@ -7,6 +7,101 @@ All notable changes to Dex will be documented in this file.
 
 ---
 
+## [1.14.0] — Faster People Lookups and Meeting Prep (2026-02-19)
+
+Dex now keeps a lightweight directory of everyone you know and a cache of your recent meetings. Instead of reading dozens of files every time you mention someone or prep for a meeting, it reads one small index.
+
+---
+
+**People Directory.** A new `lookup_person` tool searches a JSON index of all your contacts with fuzzy name matching. Looking up "Paul" instantly returns Paul Turner with his role, company, and page path — no file scanning needed. The index rebuilds automatically when you call `build_people_index`, and `lookup_person` falls back to scanning files if the index doesn't exist yet.
+
+**Meeting Context Cache.** Your meeting notes are now parsed into structured cache entries — decisions, action items, key points, attendees, and sentiment — at roughly 50 tokens each instead of 2,000 for the full file. The cache rebuilds incrementally at session start (only processing changed files) and powers faster meeting prep. Use `query_meeting_cache` to search by attendee, company, date range, or keyword.
+
+**Smarter meeting prep.** The existing `get_meeting_context` tool now checks the meeting cache first. If it finds recent meetings with your attendees there, it uses the cached decisions and action items instead of reading full files. Same results, much less context burned.
+
+### New tools
+
+- **`build_people_index`** — Scan all person pages and write `System/People_Index.json`
+- **`lookup_person`** — Fast fuzzy person lookup from the index
+- **`query_meeting_cache`** — Search cached meetings by attendee, company, date, or keyword
+- **`rebuild_meeting_cache`** — Force-rebuild the meeting cache from Python
+
+---
+
+## [1.13.0] — Connect Your Tools (2026-02-19)
+
+Dex now connects to the tools where your real work happens — Gmail, Teams, Todoist, Things 3, Trello, Jira, Confluence, and Zoom. Not just read from them. Write back. Two-way sync. Complete a task in Dex and it's done in Todoist. Get an email flagged in your morning plan because someone hasn't replied in 3 days. See your Jira sprint status right next to your weekly priorities.
+
+---
+
+### Connect to 7 new tools
+
+Each one takes a few minutes to set up. Run the command, answer a couple of questions, and you're connected. Dex tells you exactly what changed — which skills got smarter, what new capabilities you unlocked.
+
+- **Gmail + Google Calendar + Docs** (`/gmail-setup`) — Email digest in your daily plan. Recent exchanges surfaced during meeting prep. Follow-up detection flags emails waiting for replies: "Sarah hasn't replied to your pricing email from Monday. Draft a nudge?" 3-minute setup.
+- **Microsoft Teams** (`/ms-teams-setup`) — Same as Slack but for Teams users. Unread messages, mentions, and channel highlights in your daily plan and meeting prep. Works alongside Slack — both digests appear, clearly labeled.
+- **Todoist** (`/todoist-setup`) — Two-way task sync. Create in Dex, appears in Todoist. Complete on your phone, done in Dex. 1-minute setup.
+- **Things 3** (`/things-setup`) — Two-way sync for Mac users. No account needed, works offline. 30-second setup.
+- **Trello** (`/trello-setup`) — Board sync. Cards become tasks. Move a card to "Done" and it's complete in Dex too.
+- **Zoom** (`/zoom-setup`) — Access recordings, schedule meetings. Smart enough to know if Granola already has you covered so they don't step on each other.
+- **Jira + Confluence** (`/atlassian-setup`) — Sprint status in your daily plan. Project health from Jira. Confluence docs surfaced during meeting prep.
+
+### Two-way task sync
+
+Connect any task app and your tasks flow between systems automatically. Create in Dex, appears in your task app. Complete on your phone, done in Dex. One task in Todoist maps to one task in Dex, even though Dex shows it in meeting notes, person pages, and project pages.
+
+The sync is safe by design — it creates, completes, and archives. It never deletes anything.
+
+### Smarter daily plans and meeting prep
+
+Every skill that touches your day got more useful:
+
+- **`/daily-plan`** now includes email digest, Teams digest, external task status, Jira sprint progress, and Trello card updates — all in one view.
+- **`/meeting-prep`** pulls in recent email exchanges, Teams messages, Zoom recordings, Confluence docs, and Jira/Trello context for every attendee and topic.
+- **`/week-review`** shows email stats, Zoom meeting time, cross-system task completion, and Jira velocity alongside your existing review.
+- **`/project-health`** surfaces Trello board status and Jira sprint health for connected projects.
+- **`/dex-level-up`** now spots unused integration capabilities — "You connected Gmail but haven't used email context in meeting prep yet."
+
+### Smart integration discovery
+
+During onboarding (or anytime via `/getting-started`), Dex scans your existing notes for clues — Todoist links in meeting notes, Zoom URLs in calendar events, Jira ticket IDs in project pages. Instead of a generic menu, you get: "I noticed you reference Todoist in 8 places and your meetings use Zoom links. Want to connect them?"
+
+It recommends what matters to you, not what's available.
+
+### You stay in control
+
+When you connect a tool, Dex asks simple questions: "Auto-sync tasks or show me first?" and "Preview emails before sending?" You decide what happens automatically and what needs your approval. Change your mind anytime.
+
+### Integration health
+
+Dex checks whether your connected tools are healthy each time you start a session. If something's gone stale — an expired token, a disconnected service — you'll know right away instead of discovering it mid-meeting-prep.
+
+---
+
+## [1.12.0] - 2026-02-19
+
+### 🧠 Dex Remembers Everything Now
+
+Five connected builds that make Dex feel like it actually knows you — not just within a session, but across sessions, across meetings, across weeks.
+
+---
+
+**Cross-session memory.** When you start a new chat, Dex now opens with context from previous sessions — what you decided, what's been escalating, what commitments are due. No more re-explaining where you left off. Your daily plan opens with "Based on previous sessions: you discussed Acme Corp 3 times last week, decided to move to negotiation, and Sarah committed to send pricing by Friday — that's today." That context was invisible before. Now it's automatic.
+
+**Slack in your daily plan.** Run `/slack-setup` (takes 2 minutes — just needs Chrome with Slack open) and your daily plan includes a Slack digest: unread DMs, mentions, active threads. Meeting prep shows recent Slack conversations with attendees. "8 messages with Sarah in #deals this week, active thread about pricing." The context that used to live only in Slack now shows up where you're actually planning your day.
+
+**Meeting cache.** Every meeting you process now gets cached as a 50-token structured summary instead of a 2,000-token full note. Meeting prep and daily planning are dramatically faster — same intelligence, fraction of the token cost. 28 meetings cached automatically on first run.
+
+**Pattern detection.** After 2+ weeks of use, Dex starts noticing your patterns. "You've prepped for deal calls 8 times this month but checked MEDDPICC gaps only twice." Recurring mistakes get surfaced before you make them. Emerging workflows get noticed so you can turn them into skills. The pattern guard that protects you from dangerous commands now reads synthesized patterns too — not just hardcoded rules.
+
+**Critical decisions persist.** When you make an important decision in a session — "decided to move Acme to negotiation by March" — it now survives across sessions. Critical decisions appear at every session start for 30 days, so you never lose track of what you committed to.
+
+### New command
+
+- **`/slack-setup`** — Connect Slack to Dex in 2 minutes. No admin approval, no API keys. Just Slack open in Chrome. Once connected, your daily plans and meeting prep get Slack context automatically.
+
+---
+
 ## [1.11.0] - 2026-02-19
 
 ### 🧠 Dex Got a Brain Upgrade

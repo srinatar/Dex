@@ -75,7 +75,9 @@ Add any personal instructions between these markers. The `/dex-update` process p
 ## Core Behaviors
 
 ### Person Lookup (Important)
-Always check `05-Areas/People/` folder FIRST before broader searches. Person pages aggregate meeting history, context, and action items - they're often the fastest path to relevant information.
+Use `lookup_person` from Work MCP first — it reads a lightweight JSON index (~5KB) with fuzzy name matching instead of scanning every person page. If no match or index doesn't exist, fall back to checking `05-Areas/People/` folder directly. Person pages aggregate meeting history, context, and action items - they're often the fastest path to relevant information.
+
+**Rebuild the index** with `build_people_index` if person pages have been added or changed significantly.
 
 **Semantic Enhancement (QMD):** If QMD MCP tools are available (check with `qmd_status`), also run `qmd_search` for the person's name and role. This finds contextual references like "the VP of Sales mentioned..." or "the PM on the checkout project asked..." that don't mention the person by name. Merge semantic results with the person page content for richer context. If QMD is not available, standard filename/grep lookup works as before.
 
