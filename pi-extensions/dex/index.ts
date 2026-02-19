@@ -935,15 +935,14 @@ export default function (pi: ExtensionAPI) {
           }
         }
         
-        // 3. Calculate remaining focus hours from now until 6pm UK time
+        // 3. Calculate remaining focus hours from now until 6pm local time
         // NOTE: Calendar query is SLOW (15-45s) so we skip it on startup
         // Use time-based estimate instead. User can ask about calendar explicitly.
         let focusHoursAvailable = 0;
         
         const now = new Date();
-        const ukTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/London" }));
-        const currentHour = ukTime.getHours();
-        const currentMinute = ukTime.getMinutes();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
         const minutesUntil6pm = Math.max(0, (18 * 60) - (currentHour * 60 + currentMinute));
         focusHoursAvailable = minutesUntil6pm / 60;
         
@@ -1418,17 +1417,15 @@ export default function (pi: ExtensionAPI) {
             focusHoursAvailable = dashboard.calculateRemainingFocusTime(events);
           } else {
             const now = new Date();
-            const ukTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/London" }));
-            const currentHour = ukTime.getHours();
-            const currentMinute = ukTime.getMinutes();
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
             const minutesUntil6pm = Math.max(0, (18 * 60) - (currentHour * 60 + currentMinute));
             focusHoursAvailable = minutesUntil6pm / 60;
           }
         } catch {
           const now = new Date();
-          const ukTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/London" }));
-          const currentHour = ukTime.getHours();
-          const currentMinute = ukTime.getMinutes();
+          const currentHour = now.getHours();
+          const currentMinute = now.getMinutes();
           const minutesUntil6pm = Math.max(0, (18 * 60) - (currentHour * 60 + currentMinute));
           focusHoursAvailable = minutesUntil6pm / 60;
         }

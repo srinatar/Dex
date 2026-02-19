@@ -154,7 +154,7 @@ function parseAppleScriptTime(dateStr: string): number | null {
 }
 
 /**
- * Calculate remaining focus time from now until 6pm UK time
+ * Calculate remaining focus time from now until 6pm local time
  * 
  * @param events Today's calendar events (with AppleScript date strings)
  * @returns Hours of free time remaining
@@ -166,14 +166,12 @@ export function calculateRemainingFocusTime(events: Array<{
   endTime?: string;
   duration?: number;
 }>): number {
-  // Get current time in UK timezone
   const now = new Date();
-  const ukTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/London" }));
-  const currentHour = ukTime.getHours();
-  const currentMinute = ukTime.getMinutes();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
   const currentTimeMinutes = currentHour * 60 + currentMinute;
   
-  // End of workday: 6pm UK time = 18:00 = 1080 minutes
+  // End of workday: 6pm local time = 18:00 = 1080 minutes
   const endOfDayMinutes = 18 * 60;
   
   // If already past 6pm, no focus time left
