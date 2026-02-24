@@ -23,11 +23,12 @@
 
 | Goal | Progress | Status |
 |------|----------|--------|
-| VSI Fusion & Stability | 0% | 🔴 |
-| VDPI M&E Readiness & Adoption | 0% | 🔴 |
-| Cloud Migration (VSI + VDPI) | 0% | 🔴 |
-| API, MCP & SSD Export | 0% | 🔴 |
-| DPI Launch (OOB + AI Alerts) | 0% | 🔴 |
+| Launch VSI Fusion & Stability by June | 0% | 🔴 |
+| Drive VDPI M&E Readiness & Adoption by June | 0% | 🔴 |
+| Drive Cloud Migration (VSI + VDPI) by June | 0% | 🔴 |
+| Drive MCP GA, VPI API GA by June | 0% | 🔴 |
+| Reduce SSD Tech Debts and Increase Reliability | 0% | 🔴 |
+| Drive DPI OOB Metrics Launch (OOB + AI Alerts) by April 30 | 0% | 🔴 |
 
 **This week advances:** Goals #1 (PMF), #2 (M&E/NBC), #5 (DPI)
 
@@ -63,10 +64,10 @@
 ## 📋 Tasks by Priority
 
 ### Must Complete (P0)
-- [ ] *(Add when you create tasks)*
+- [ ] *(Drive MCP GA)*
 
 ### Should Complete (P1)
-- [ ] 
+- [ ] *(Drive Clarity on VDPI Unification Product Requirements and Mock in collaboration with Engineering and Product and Field)
 
 ### If Time Permits (P2)
 - [ ] **Platform Stability: Real-time inputs for engineering** — Fri: Pulse research on Live/real-time dashboard usage 

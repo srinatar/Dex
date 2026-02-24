@@ -460,7 +460,7 @@ Skills extend Dex capabilities and are invoked with `/skill-name`. Common skills
 - `/week-plan`, `/week-review` - Weekly workflow
 - `/quarter-plan`, `/quarter-review` - Quarterly planning
 - `/triage`, `/meeting-prep`, `/process-meetings` - Meetings and inbox
-- `/project-health`, `/product-brief` - Projects
+- `/project-health`, `/product-brief`, `/sync-projects` - Projects
 - `/career-coach`, `/resume-builder` - Career development
 - `/ai-setup`, `/ai-status` - Configure budget cloud models (80% cheaper) and offline mode
 - `/enable-semantic-search` - Enable local AI-powered semantic search with smart collection discovery

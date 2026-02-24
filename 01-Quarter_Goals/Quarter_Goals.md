@@ -13,15 +13,19 @@ created: 2026-02-12
 
 ## 🎯 Quarter Objectives
 
-### 1. VSI Fusion & Stability — **Product-Market Fit** ^Q1-2026-goal-1
+### 1. VSI Fusion & Stability — **Launch Fusion without impact** ^Q1-2026-goal-1
 
 **What success looks like:**
-- Meaningful progress on Fusion (platform consolidation) — teams are making progress
+- At least 50% rollout complete on Fusion (platform consolidation) — teams are making progress
 - No production incidents
+- MVH cost brought under $100
 
 **Key milestones:**
 - [ ] Fusion platform consolidation — teams actively progressing
 - [ ] Zero production incidents for VSI
+- [ ] Non Critical customers migrated without incidents
+- [ ] Impact identified for critical customers
+- [ ] Find out what is the benefit we can sell to customers with Fusion rollout
 
 **Progress:** 0% 🔴
 
@@ -32,6 +36,7 @@ created: 2026-02-12
 **What success looks like:**
 - Clear definition of what to build for M&E customers to embrace VDPI
 - Feedback from Field and Sales on what's needed in VSI and VDPI for upgrade path
+- Define product requirements on what it means for Unified Experience
 - At least 5 customers started on VDPI Client SDK integration
 - Successful PoC with 1–2 customers (NBC considering)
 - Manage customer escalations, feature requests, and custom enhancements well
@@ -68,10 +73,16 @@ created: 2026-02-12
 - 2–3 new customers using API/MCP for VDPI
 - 0 P0 or P1 production incidents
 - Manage customer escalations well when incidents occur
+- Launch MCP GA
+- Close confusion around multiple VDPI SSD Feeds and Drive VDPI SSD adoptions
+- Ensure VSI and VDPI SSD is delivered on-time for critical customers such as Disney, DAZN, Paramount, NBC. 
+
 
 **Key milestones:**
 - [ ] 2–3 new customers on API/MCP for VDPI
-- [ ] Zero P0/P1 production incidents
+- [ ] MCP GA Announced
+- [ ] VDPI GA Announced
+- [ ] Zero P0/P1 production incidents for API/MCP/SSD
 - [ ] Escalation process effective when needed
 
 **Progress:** 0% 🔴
@@ -81,8 +92,8 @@ created: 2026-02-12
 ### 5. DPI Launch (OOB Metrics + AI Alerts) — **Product-Market Fit** ^Q1-2026-goal-5
 
 **What success looks like:**
-- Out-of-box metrics launched for DPI
-- AI Alerts launched for DPI
+- Out-of-box metrics launched for DPI by April 30
+- AI Alerts launched for DPI by April 30
 - At least 3 customers using DPI with OOB metrics and AI Alerts
 
 **Key milestones:**
