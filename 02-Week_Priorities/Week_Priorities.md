@@ -1,125 +1,122 @@
 # Week Priorities
 
-**Week of:** 2026-02-09
+**Week of:** 2026-02-23
 
 ---
 
-## 📊 Week Shape
+## 🎯 Top 3 This Week (Cross-Project)
 
-| Day | Type | Deep Work? | Notes |
-|-----|------|------------|-------|
-| Mon | Stacked | ❌ | 11 meetings — Play of the Week, DPI for M&E, PM Sync, siddu doctor |
-| Tue | Stacked | ⚠️ | 10 meetings — 2–6pm block (4h) before yoga |
-| Wed | Stacked | ❌ | 12 meetings — Paramount VSI, Team Dinner, Air Asia |
-| Thu | Stacked | ❌ | 10 meetings — NBC Escalation, GCP Migration, DPI Migration |
-| Fri | Moderate | ✅ | 7 meetings — **11:30am–2pm** (2.5h) best for focus |
+1. **MCP GA readiness (API/MCP/SSD)** — [Q1-2026-goal-4](01-Quarter_Goals/Quarter_Goals.md)
+   - **Success this week:**  
+     - Bryan/Docs review done or scheduled with clear doc comments captured  
+     - Aditya review content outlined (what GA means, who it’s for, why now)  
+     - Draft announcement email + training outline started
+   - **Core tasks:**  
+     - Meet Bryan + Docs for **MCP docs review (Feb 24)**  
+     - Meet Aditya for **MCP docs review (Feb 26)**  
+     - Sketch GA readiness checklist (docs, sample demo, support training, field training, escalation runbook)
 
-**Deep work capacity:** ~6.5 hours this week  
-**Best blocks:** Tue 2–6pm (4h), Fri 11:30am–2pm (2.5h)
+2. **DPI OOB Metrics + AI Alerts near-term plan** — [Q1-2026-goal-5](01-Quarter_Goals/Quarter_Goals.md)
+   - **Success this week:**  
+     - Minimal metric set for AI Alerts agreed with Arvind  
+     - Clear list of OOB metrics + owners and rough launch timeline  
+     - DPI Migration List v1 written down
+   - **Core tasks:**  
+     - Align with TLB/Arvind on **minimal metrics for Alerts** (including semantics + early customers)  
+     - Lock or refine OOB metric list and assign owners  
+     - Draft DPI Migration List v1 that you can review in upcoming meetings
 
----
-
-## 🎯 Quarterly Goals Context
-
-| Goal | Progress | Status |
-|------|----------|--------|
-| Launch VSI Fusion & Stability by June | 0% | 🔴 |
-| Drive VDPI M&E Readiness & Adoption by June | 0% | 🔴 |
-| Drive Cloud Migration (VSI + VDPI) by June | 0% | 🔴 |
-| Drive MCP GA, VPI API GA by June | 0% | 🔴 |
-| Reduce SSD Tech Debts and Increase Reliability | 0% | 🔴 |
-| Drive DPI OOB Metrics Launch (OOB + AI Alerts) by April 30 | 0% | 🔴 |
-
-**This week advances:** Goals #1 (PMF), #2 (M&E/NBC), #5 (DPI)
-
----
-
-## 🎯 Top 3 This Week
-
-1. **Product-Market Fit validation** — Product-Market Fit — [Q1-2026-goal-1](01-Quarter_Goals/Quarter_Goals.md)
-   - Success criteria: Customer feedback session or PMF criteria defined
-   - **Scheduled:** Tue 2–4pm or Fri 11:30am–1pm (deep work blocks)
-   - Effort: Medium / Deep work
-
-2. **M&E upsell outreach** — Media & Entertainment Upsell — [Q1-2026-goal-2](01-Quarter_Goals/Quarter_Goals.md)
-   - Success criteria: Outreach to 1–2 NBC/Disney-type prospects, or prep for existing pipeline
-   - **Scheduled:** Fri 11:30am–1pm (after Product Review) or Thu between meetings
-   - Effort: Medium
-   - *NBC meetings this week:* Wed Emilyn sync, Thu NBC Escalation review, Fri NBC Review — use for prep
-
-3. **DPI Migration List + Product Review prep** — Product-Market Fit — [Q1-2026-goal-5](01-Quarter_Goals/Quarter_Goals.md)
-   - Success criteria: DPI Migration List finalised (Thu 5:30), ready for Product Review (Fri 10:30)
-   - **Scheduled:** Thu 5:30pm meeting + Fri 10:30 Product Review
-   - Effort: Medium
-   - *Replaces:* Set up 3-product tracking ✅ (project pages created)
+3. **Real-time usage & stability signal (Platform Stability)** — [Q1-2026-goal-1](01-Quarter_Goals/Quarter_Goals.md)
+   - **Success this week:**  
+     - Pulse research on Live vs 1‑minute usage complete  
+     - Simple recommendation captured: keep Live vs de‑emphasise; when to default 1‑minute for NBC
+   - **Core tasks:**  
+     - Run Pulse research on Live/real‑time dashboards (usage + who depends on it)  
+     - Write a short note or 1–2 slides with recommendation + rationale
 
 ---
 
-## ⚡ Commitments Due This Week
+## ⚡ Commitments / Dated Items This Week
 
-- [ ] *(Add any promises or follow-ups due this week)*
+- **Feb 24** — MCP docs review with Bryan/Docs (API/MCP/SSD)  
+- **Feb 26** — MCP docs review with Aditya (API/MCP/SSD)  
+- **This week** — Pulse research slot for Live/real‑time usage (Platform Stability)  
+- **This week** — Working session with Arvind/TLB on minimal metrics + semantics asks (DPI AI Alerts)
 
 ---
 
 ## 📋 Tasks by Priority
 
 ### Must Complete (P0)
-- [ ] *(Drive MCP GA)*
+
+- [ ] **MCP GA readiness packet v0.9**  
+  - Bryan/Docs review done or scheduled; comments captured  
+  - Aditya review narrative outlined  
+  - GA readiness checklist sketched (docs, demo, training, escalation)
+
+- [ ] **DPI near-term plan for OOB + AI Alerts**  
+  - Minimal metric set for Alerts agreed  
+  - OOB metric list + owners + rough timeline drafted  
+  - DPI Migration List v1 captured
 
 ### Should Complete (P1)
-- [ ] *(Drive Clarity on VDPI Unification Product Requirements and Mock in collaboration with Engineering and Product and Field)
+
+- [ ] **Platform Stability: Real-time usage evidence + recommendation**  
+  - Pulse research done; numbers + key quotes captured  
+  - One simple recommendation written down
+
+- [ ] **VDPI M&E: one concrete artifact**  
+  - Either: M&E build definition draft **or** targeted customer list + offer outline
+
+- [ ] **Cloud Migration: sharpen GCP plan**  
+  - 1‑pager draft on plan + success criteria to review with Swaraj
 
 ### If Time Permits (P2)
-- [ ] **Platform Stability: Real-time inputs for engineering** — Fri: Pulse research on Live/real-time dashboard usage 
+
+- [ ] Flesh out MCP sample demo flow  
+- [ ] Tighten escalation runbook draft for API/MCP/SSD incidents  
+- [ ] Add follow‑up questions for NBC / AirAsia into upcoming meeting agendas
 
 ---
 
-## 📅 Key Meetings
+## 🕒 Suggested Daily MCP Focus Blocks
 
-| Day | Time | Meeting | Prep Needed | Related Priority |
-|-----|------|---------|-------------|------------------|
-| Mon | 8:30 | Play of the Week + Sales Forecast | — | — |
-| Mon | 10:00 | Sync: DPI for M&E | — | M&E |
-| Mon | 2:00 | [Solution Sync] PM Team | — | PMF |
-| Tue | 9:00 | Product Alignment (Monthly) | — | PMF |
-| Tue | 12:00 | 1-1 with Arvind | — | — |
-| Tue | 10:00 | MCP Biweekly Syncup | — | Operational |
-| Wed | 1:00 | Sriram / Emilyn - NBC API Request | NBC context | M&E |
-| Wed | 2:00 | [Solution Sync] PM Team | — | PMF |
-| Wed | 6:00 | Team Dinner | — | — |
-| Wed | 8:30 | Quick Catch Up - Air Asia | — | M&E |
-| Thu | 11:00 | Metrics Follow-up w/ Will P | — | PMF |
-| Thu | 1:30 | NBC Escalation process review | Escalation context | M&E |
-| Thu | 5:30 | Finalise DPI Migration List | — | Operational |
-| Fri | 8:00 | NBC Review | Full prep | M&E |
-| Fri | 9:00 | Sriram eye doctor appointment | — | — |
-| Fri | 10:30 | Product Review for Sriram | — | PMF |
+These are **suggested holds** you can add to your calendar so MCP work doesn’t slip:
+
+| Day | Time (suggested) | Focus |
+|-----|------------------|-------|
+| Mon | 4:00–5:00pm | MCP GA focus (docs + checklist) |
+| Tue | 4:00–5:30pm | MCP GA focus (Bryan/Docs prep + follow‑ups) |
+| Wed | 4:00–5:00pm | MCP GA focus (Aditya prep + announcement draft) |
+| Thu | 4:00–5:00pm | MCP GA focus (training outline + demo notes) |
+| Fri | 10:00–11:00am | MCP GA focus (consolidate into packet v0.9) |
+
+> Add these as actual events in your calendar (title suggestion: **“MCP GA Focus”**). If a day is already slammed, keep at least **30–45 min** somewhere for MCP so you always make progress.
 
 ---
 
-## 📊 Pillar Balance
+## 🎯 Quarterly Goals Context (Reference)
 
-| Pillar | This Week | Balance |
-|--------|-----------|---------|
-| Product-Market Fit | Priorities 1, 3 | 🟩 |
-| Media & Entertainment Upsell | Priority 2 | 🟩 |
+| Goal | Progress | Status |
+|------|----------|--------|
+| VSI Fusion & Stability — Product-Market Fit | 0% | 🔴 |
+| VDPI M&E Readiness & Adoption — M&E Upsell | 0% | 🔴 |
+| Cloud Migration (VSI + VDPI) — Product-Market Fit | 0% | 🔴 |
+| API, MCP & SSD Export — Product-Market Fit | 0% | 🔴 |
+| DPI Launch (OOB Metrics + AI Alerts) — Product-Market Fit | 0% | 🔴 |
 
----
-
-## 🔄 Carried Over
-
-- [x] Set up 3-product tracking — ✅ Done (5 project pages in 04-Projects/)
+**This week primarily advances:** Goals **#1**, **#2**, **#3**, **#4**, **#5** with special emphasis on **#4** (MCP) and **#5** (DPI).
 
 ---
 
 ## 🏁 End of Week Review
 
-*Fill in on Friday*
+*Fill in on Friday.*
 
 ### Completed
 - 
 
-### Didn't Finish
+### Didn’t Finish
 - 
 
 ### Learnings
@@ -130,5 +127,4 @@
 
 ---
 
-*Generated: 2026-02-12*
-*Command: /week-plan*
+*Updated manually: 2026-02-23*
