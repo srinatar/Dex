@@ -67,8 +67,6 @@ Each job represents something that needs to happen reliably. The system exists t
 | Task review | Shows open tasks, priorities, deadlines |
 | Must/Should/Could structure | Forces prioritization rather than flat lists |
 
-**v1.11.0**: Agent-powered with memory. Morning briefings surface trends across days instead of repeating yesterday's flags. Daily plan includes a quickref summary for glanceable priorities. Context isolation keeps sessions clean all day.
-
 **Example Flow**: Run `/plan` at 8am. If journaling is enabled, Dex guides you through a quick reflection: energy level, what matters most, what might derail you. Then it checks your calendar, reviews open tasks, and creates a daily note with your top priority highlighted, schedule mapped out, and potential derailers flagged.
 
 ---
@@ -87,8 +85,6 @@ Each job represents something that needs to happen reliably. The system exists t
 | Meeting capture | Identifies people mentioned, updates their pages |
 | `/meeting-prep` command | Surfaces context about attendees before calls |
 | `refresh_company` tool | Pulls all related context into company page |
-
-**v1.11.0**: Person pages auto-update when meetings are processed. No manual step to link meetings to people — it happens as part of the capture flow.
 
 **Example Flow**: Before a call with Sarah, Dex looks up `People/External/Sarah_Chen.md`. Shows: last conversation topics, what she cares about, any open action items involving her. After the meeting, her page updates with today's discussion points.
 
@@ -111,8 +107,6 @@ For organization-level context, check company pages in `05-Areas/Companies/`. Sh
 | Pillar alignment | Every task connects to strategic priorities |
 | `/triage tasks` | Extracts tasks from notes, routes them properly |
 
-**v1.11.0**: Triage and inbox processing tuned for speed. Quick routing decisions feel instant — less friction between capture and action.
-
 **Example Flow**: You try to add "fix the bug" as a task. The MCP server flags it as ambiguous and asks: "Which bug? What system? What's the expected outcome?" You clarify to "Fix login timeout bug in auth module" and it creates cleanly. Later, you try to add a similar task - the server catches it as 78% match to existing, prompts you to review.
 
 ---
@@ -133,8 +127,6 @@ For organization-level context, check company pages in `05-Areas/Companies/`. Sh
 | `Mistake_Patterns.md` | Logged mistakes become rules that prevent repetition |
 | `Working_Preferences.md` | Collaboration style captured and applied consistently |
 | Session learnings capture | Automatic logging in `System/Session_Learnings/` |
-
-**v1.11.0**: Learning heartbeat now focused on operational knowledge only. Preferences are handled by Claude's built-in memory, so session learnings are cleaner and less noisy.
 
 **Example Flow**: Friday afternoon, run `/week`. Dex synthesizes the week: themes that emerged, energy patterns (what energized vs drained you), progress by project, questions that came up. You spot a pattern - every meeting with Team X drains energy. That's useful data for next week's planning.
 
@@ -157,8 +149,6 @@ During the week, you mentioned "I prefer summaries in bullet points." Dex captur
 | Project template | Consistent structure: status, stakeholders, timeline, decisions |
 | Task linking | Tasks connect to projects for context |
 
-**v1.11.0**: Project-health agent remembers previous health status. Only surfaces projects that changed status, not the full list every time — less noise, faster signal.
-
 **Example Flow**: Run `/project-health`. Dex scans your projects: "Website Redesign hasn't been updated in 12 days. Q1 Planning has 3 blocked tasks. Product Launch is on track." You know immediately where to focus attention.
 
 ---
@@ -177,8 +167,6 @@ During the week, you mentioned "I prefer summaries in bullet points." Dex captur
 | Career evidence capture | During reviews, Dex asks "Worth capturing for your career folder?" |
 | Skill tracking tags | Tag work with skills (`# Career: System Design`) to connect daily work to growth |
 | Evidence folders | Organized storage: Achievements/, Feedback/, Skills/ |
-
-**v1.11.0**: Career coaching auto-captures evidence when achievements with metrics are discussed. Your evidence log builds automatically over time without manual prompts.
 
 **Example Flow**: During `/daily-review`, Dex notices you completed "Ship payments redesign." It asks: "This looks like career evidence. What competencies did this demonstrate?" You say: "System design and cross-functional leadership." Dex saves it to your Career folder with full context.
 
@@ -203,8 +191,6 @@ Three months later, you run `/career-coach` → Promotion Assessment. Dex analyz
 | Usage tracking | Quietly tracks which features you use (all local, nothing shared) |
 | `/dex-level-up` command | Discovers unused features based on what you actually use |
 | Learning capture | During `/review`, captures what you learned for future improvements |
-
-**v1.11.0**: Vault maintenance tool for system hygiene. Memory ownership is documented (what Dex stores vs what Claude remembers). Named sessions guide for project continuity across conversations.
 
 **Example Flow**: During `/review`, you realize: "I keep forgetting to check task dependencies. We should auto-suggest blocked-by relationships."
 

@@ -8,20 +8,19 @@
 
 ## Core Workflows (8 features)
 
-- [ ] Daily planning (`/daily-plan`)
+- [x] Daily planning (`/daily-plan`)
 - [ ] Daily review (`/review` or `/daily-review`)
-- [ ] Weekly planning (`/week-plan`)
+- [x] Weekly planning (`/week-plan`)
 - [ ] Weekly review (`/week-review`)
-- [ ] Quarterly planning (`/quarter-plan`)
+- [x] Quarterly planning (`/quarter-plan`)
 - [ ] Quarterly review (`/quarter-review`)
 - [ ] Getting started tour (`/getting-started`)
 - [ ] Journaling (`/journal`)
 
-## Meeting Workflows (7 features)
+## Meeting Workflows (6 features)
 
 - [ ] Meeting prep (`/meeting-prep`)
 - [ ] Meeting processing (`/process-meetings`)
-- [ ] Commitment scan (`/commitment-scan`)
 - [ ] Person page created
 - [ ] Person page updated
 - [ ] Company page created
@@ -36,11 +35,12 @@
 - [ ] Goal created
 - [ ] Pillar alignment used
 
-## Organization (5 features)
+## Organization (6 features)
 
 - [ ] Inbox triage (`/triage` or `/process-inbox`)
 - [ ] Learning capture (`/save-insight`)
-- [ ] Project tracking (`/project-health`)
+- [x] Project tracking (`/project-health`)
+- [x] **Project tasks review** (`/project-tasks-review`) — Review all tasks by project and add tasks
 - [ ] Product brief (`/product-brief`)
 - [ ] Project page created
 
@@ -60,7 +60,7 @@
 - [ ] Promotion readiness checked
 - [ ] Skills gap analysis
 
-## System Discovery & Improvement (10 features)
+## System Discovery & Improvement (8 features)
 
 - [ ] Feature discovery (`/dex-level-up`)
 - [ ] X-ray transparency (`/xray`)
@@ -69,20 +69,16 @@
 - [ ] Improvement workshop (`/dex-improve`)
 - [ ] Idea captured (via MCP)
 - [ ] Dex updated (`/dex-update`)
-- [ ] Dex rolled back (`/dex-rollback`)
 - [ ] Learnings reviewed (`/learnings`)
-- [ ] Beta feature activated (`/beta-activate`)
 
-## Integrations (8 features)
+## Integrations (6 features)
 
 - [ ] Calendar connected (via Calendar MCP)
 - [ ] Calendar synced daily
 - [ ] Granola connected (via Granola MCP)
 - [ ] Obsidian enabled (`/dex-obsidian-setup`)
-- [ ] ScreenPipe enabled (`/screenpipe-setup`)
-- [ ] ScreenPipe used (`/screen-recall` or `/screen-summary`)
-- [ ] MCP added (`/dex-add-mcp`)
 - [ ] Pi used (`/pi`)
+- [ ] ScreenPipe used (`/screen-recall` or `/screen-summary`)
 
 ## AI Configuration (5 features)
 
@@ -92,15 +88,12 @@
 - [ ] Smart routing enabled
 - [ ] AI status checked (`/ai-status`)
 
-## Advanced (7 features)
+## Advanced (4 features)
 
 - [ ] Prompt improvement via API (`/prompt-improver`)
 - [ ] Custom MCP created (`/create-mcp`)
 - [ ] MCP integrated (`/integrate-mcp`)
-- [ ] Custom skill created (`/create-skill`)
 - [ ] Demo mode used (`/dex-demo`)
-- [ ] Vault reset (`/reset`)
-- [ ] Setup re-run (`/setup`)
 
 ---
 
@@ -119,12 +112,11 @@ Tracks whether user has been asked about anonymous feature usage tracking.
 - **Consent asked:** false
 - **Consent decision:** pending
 - **Consent date:** (not yet decided)
-- **Last prompted:** (not yet prompted)
 
 **Values:**
-- `Consent decision: pending` → Not yet decided (will be asked each session until they choose)
+- `Consent decision: pending` → Not yet asked
 - `Consent decision: opted-in` → User agreed to help improve Dex
-- `Consent decision: opted-out` → User declined (never ask again)
+- `Consent decision: opted-out` → User declined
 
 ---
 
@@ -160,7 +152,7 @@ Tracks whether user has been asked about ScreenPipe ambient intelligence.
 Auto-calculated metrics (if analytics opted in). Updated when features are used.
 
 - **Days since setup:** 0
-- **Feature adoption score:** 0/66
+- **Feature adoption score:** 0/58
 - **Journey stage:** new
 - **Most active area:** (not yet determined)
 - **Last active date:** (not yet active)

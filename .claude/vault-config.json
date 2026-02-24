@@ -1,0 +1,13 @@
+{
+  "user": {
+    "name": "Sriram",
+    "role": "Product Manager",
+    "company": "Conviva",
+    "companySize": "startup",
+    "pillars": [
+      "Achieve product-market fit with current product",
+      "Upsell to Media & Entertainment (NBC, Disney-type traditional broadcast)"
+    ]
+  },
+  "createdAt": "2026-02-11"
+}

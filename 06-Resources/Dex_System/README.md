@@ -16,6 +16,9 @@ This folder contains the "why" and "how" of Dex itself. When you forget how some
 
 - **Jobs to Be Done** — Understand what problems Dex solves and when to use each feature
 - **System Guide** — Complete walkthrough of workflows, commands, and best practices
+- **Dex Power User Cheatsheet** — Quick reference: commands and when to use them
+- **Jira & Confluence Setup** — Push Dex project status to Confluence pages and Jira
+- **Google Calendar Setup** — Direct Google Calendar MCP integration
 - **Integration guides** — Connect external tools to enhance Dex
 
 ## Maintenance

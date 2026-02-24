@@ -8,25 +8,25 @@
 demo_mode: false
 
 # Your name (used to identify you in meetings, filter yourself from participant lists)
-name: ""
+name: "Sriram"
 
 # Your role (used in meeting analysis prompts)
-role: ""
+role: "Product Manager"
 
 # Role group (for command filtering and adaptation)
 # Options: product, sales, marketing, finance, engineering, customer_success, operations, leadership, design, support, advisory
-role_group: ""
+role_group: "product"
 
 # Your company (optional, adds context to meeting analysis)
-company: ""
+company: "Conviva"
 
 # Company size tier
-company_size: ""  # options: startup (1-100), scaling (100-1000), enterprise (1000-10000), large_enterprise (10000+)
+company_size: "startup"  # options: startup (1-100), scaling (100-1000), enterprise (1000-10000), large_enterprise (10000+)
 
 # Your company email domain (used to identify internal vs external people)
 # Example: "pendo.io" (without @)
 # Multiple domains: "pendo.io, pendo.com"
-email_domain: ""
+email_domain: "conviva.ai"
 
 # Communication Preferences
 # How the AI adapts its tone and language when working with you
@@ -41,7 +41,7 @@ communication:
   detail_level: "concise"  # options: concise, balanced, comprehensive
   
   # Career/seniority context (for tone calibration)
-  career_level: "mid"  # options: junior, mid, senior, leadership, c_suite
+  career_level: "leadership"  # options: junior, mid, senior, leadership, c_suite
   
   # Coaching style preference (for career coaching)
   coaching_style: "collaborative"  # options: encouraging, collaborative, challenging
@@ -58,11 +58,11 @@ meeting_processing:
 # Meeting Intelligence Configuration
 # Controls what gets extracted from your meetings (set during onboarding based on role)
 meeting_intelligence:
-  # Extract customer pain points and challenges
-  extract_customer_intel: false
+  # Extract customer pain points and challenges (enabled for Product Manager)
+  extract_customer_intel: true
   
-  # Extract competitive mentions and comparisons
-  extract_competitive_intel: false
+  # Extract competitive mentions and comparisons (enabled for Product Manager)
+  extract_competitive_intel: true
   
   # Extract action items (always recommended)
   extract_action_items: true
@@ -95,18 +95,18 @@ journaling:
 # Controls whether you use quarterly goal setting
 quarterly_planning:
   # Whether quarterly planning is enabled
-  enabled: false
+  enabled: true
   
   # Has user been asked about quarterly planning during onboarding?
-  prompted: false
+  prompted: true
   
   # Month when Q1 starts (1=Jan, 2=Feb, 4=Apr, etc)
   # Common: 1 (calendar year), 2 (some fiscal years), 4 (many fiscal years)
-  q1_start_month: 1
+  q1_start_month: 2
   
   # Current quarter (auto-calculated by system)
   current_quarter: "Q1 2026"
   
   # Current quarter dates (auto-calculated)
-  quarter_start_date: "2026-01-01"
-  quarter_end_date: "2026-03-31"
+  quarter_start_date: "2026-02-01"
+  quarter_end_date: "2026-04-30"

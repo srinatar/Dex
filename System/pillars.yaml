@@ -14,15 +14,29 @@
 #
 # The Work MCP uses these to categorize tasks and check balance across your work.
 
-pillars: []
-  # Will be populated during onboarding
-  # Example structure:
-  # - id: pillar_id
-  #   name: "Pillar Name"
-  #   description: "What this pillar represents"
-  #   keywords:
-  #     - keyword1
-  #     - keyword2
+pillars:
+  - id: product_market_fit
+    name: "Product-Market Fit"
+    description: "Achieve product-market fit with the current product"
+    keywords:
+      - pmf
+      - product-market fit
+      - validation
+      - market fit
+      - product discovery
+      - customer feedback
+  - id: mae_upsell
+    name: "Media & Entertainment Upsell"
+    description: "Upsell current product to traditional broadcast/media companies (NBC, Disney-type)"
+    keywords:
+      - media
+      - entertainment
+      - broadcast
+      - NBC
+      - Disney
+      - upsell
+      - expansion
+      - M&E
 
 # Priority limits (how many active tasks per priority level)
 priority_limits:

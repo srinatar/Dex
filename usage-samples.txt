@@ -1,0 +1,5 @@
+Goals will appear in weekly planning (/week-plan)
+Update progress and check off milestones as you go
+Run /quarter-review at the end of Q1 (Apr 30)
+Priority 3 (Set up 3-product tracking) is done — all 5 project pages are created.
+Run /week-plan to align this week’s priorities with these goals.

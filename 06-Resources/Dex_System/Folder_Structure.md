@@ -73,6 +73,8 @@ Dex/
 ### When complete
 Move to `07-Archives/Projects/` with completion date and learnings.
 
+**Reviewing tasks across projects:** Run `/project-tasks-review` to see all tasks by project in one view and add or complete tasks; optionally update `04-Projects/Project_Tasks_Overview.md` for a single-file snapshot.
+
 **Key distinction:**  
 Project = has an end ("Ship payments redesign")  
 Area = ongoing ("Customer success management")
