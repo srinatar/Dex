@@ -1,0 +1,12 @@
+git push origin main -> to push to srinatar origin
+
+# fresh pull
+git clone git@github.com:yourusername/sn-ops.git
+cd sn-ops
+git submodule update --init --recursive  # Pulls in dex
+
+# pull latest fork
+git pull origin main  # Pulls your latest from private fork
+
+# get latest fork from upstream
+git pull upstream main
