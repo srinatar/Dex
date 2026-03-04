@@ -19,6 +19,9 @@
 8. [Self-Learning System](#self-learning-system)
 9. [Design Constraints](#design-constraints)
 
+**Related Guides:**
+- [Cursor Compatibility](Cursor_Compatibility.md) - Working with both Cursor and Claude Code
+
 ---
 
 ## Architecture Philosophy
@@ -260,7 +263,7 @@ This ensures every task gets a unique, sortable ID that's stable across files.
 
 **Architecture:** API-first with cache fallback (v2.0)
 - **Primary:** Uses Granola's unofficial API for complete historical data (91% success rate)
-- **Fallback:** Reads from local cache (`~/Library/Application Support/Granola/cache-v3.json`) if API fails
+- **Fallback:** Reads from local cache (`~/Library/Application Support/Granola/cache-v*.json`, auto-detects latest) if API fails
 - **Protection:** Response caching (5 min TTL), exponential backoff, graceful degradation
 
 **Key tools:**
@@ -1177,12 +1180,30 @@ Want to adapt Dex for your use case? Key customization points:
 3. **Skills:** Create role-specific skills in `.claude/skills/` (see `anthropic-skill-creator` skill)
 4. **MCP servers:** Add integrations for your tools (Notion, Linear, etc.) - see `.claude/reference/mcp-servers.md`
 
+### Pi Extension Development
+
+Building custom TUI components, widgets, or interactive UIs in Pi?
+
+**Read this FIRST:** `06-Resources/Dex_System/Pi_TUI_Reference.md`
+
+This reference contains:
+- Critical rules (line width truncation, component interface, theme usage)
+- Common patterns (selection dialogs, widgets, async operations)
+- Common mistakes (documented from real bugs)
+- API quick reference
+- Working code examples
+
+**Official Pi docs:** `/opt/homebrew/lib/node_modules/@mariozechner/pi-coding-agent/docs/tui.md`
+
+**Why this matters:** Pi TUI has strict rules. Skipping the reference leads to crashes and wasted debugging time.
+
 ### Best Practices
 
 - **Don't edit canonical files manually:** Use MCP tools to ensure syncing works
 - **Backup regularly:** `git commit` daily (or use `.claude/hooks/session-end.sh` to auto-commit)
 - **Test in demo mode:** Use `System/Demo/` to experiment without touching real data
 - **Document learnings:** Use `System/Session_Learnings/` to capture improvements
+- **Read Pi TUI Reference before TUI work:** See above - mandatory for extension development
 
 ---
 
