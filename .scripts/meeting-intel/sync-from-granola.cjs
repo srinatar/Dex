@@ -3,15 +3,15 @@
 /**
  * Sync from Granola - Background meeting intelligence processor
  *
- * Uses Granola's official MCP server as PRIMARY data source, with local
- * cache as FALLBACK. Processes new meetings with LLM and generates
- * structured meeting notes.
+ * Uses Granola's Supabase API as PRIMARY data source (structured JSON,
+ * includes mobile recordings), with local cache as FALLBACK.
+ * Processes new meetings with LLM and generates structured meeting notes.
  *
  * Designed to run automatically via macOS Launch Agent every 30 minutes.
  * No Cursor or Claude required - fully autonomous.
  *
  * Data source priority:
- *   1. Granola MCP server (https://mcp.granola.ai/mcp) — includes mobile recordings
+ *   1. Granola API (api.granola.ai) — structured JSON, includes mobile recordings
  *   2. Local Granola cache (cache-v*.json, latest version) — desktop-only fallback
  *
  * Usage:
@@ -31,9 +31,6 @@ const yaml = require('js-yaml');
 // ============================================================================
 
 const VAULT_ROOT = path.resolve(__dirname, '../..');
-
-const GRANOLA_MCP_ENDPOINT = 'https://mcp.granola.ai/mcp';
-const TOKEN_FILE = path.join(os.homedir(), '.config', 'dex', 'granola-tokens.json');
 
 // Find the highest-versioned cache-v*.json in a directory
 function findLatestGranolaCache(granolaDir) {
@@ -72,7 +69,23 @@ function getGranolaCachePath() {
   }
 }
 
+// Get Granola credentials path (for API access)
+function getGranolaCredsPath() {
+  const homedir = os.homedir();
+  const platform = os.platform();
+
+  if (platform === 'darwin') {
+    return path.join(homedir, 'Library/Application Support/Granola/supabase.json');
+  } else if (platform === 'win32') {
+    const roaming = process.env.APPDATA || path.join(homedir, 'AppData/Roaming');
+    return path.join(roaming, 'Granola/supabase.json');
+  } else {
+    return path.join(homedir, '.config/Granola/supabase.json');
+  }
+}
+
 const GRANOLA_CACHE = getGranolaCachePath();
+const GRANOLA_CREDS = getGranolaCredsPath();
 const STATE_FILE = path.join(__dirname, 'processed-meetings.json');
 const MEETINGS_DIR = path.join(VAULT_ROOT, 'Inbox', 'Meetings');
 const QUEUE_FILE = path.join(MEETINGS_DIR, 'queue.md');
@@ -280,261 +293,212 @@ function saveState(state) {
 }
 
 // ============================================================================
-// GRANOLA MCP CLIENT — PRIMARY DATA SOURCE
+// GRANOLA API CLIENT — PRIMARY DATA SOURCE
 // ============================================================================
 
-const { createMcpClient } = require('./granola-mcp-client.cjs');
+/**
+ * Get Granola API access token from local credentials file.
+ * Granola's desktop app stores these automatically — no separate OAuth needed.
+ * Returns null if credentials not found or token missing.
+ */
+function getGranolaApiToken() {
+  if (!fs.existsSync(GRANOLA_CREDS)) {
+    return null;
+  }
+
+  try {
+    const data = JSON.parse(fs.readFileSync(GRANOLA_CREDS, 'utf-8'));
+    const workosTokens = JSON.parse(data.workos_tokens || '{}');
+    return workosTokens.access_token || null;
+  } catch (e) {
+    return null;
+  }
+}
 
 /**
- * Convert MCP meeting data to the standard meeting format expected by the
- * rest of the pipeline.
- *
- * The MCP get_meetings response may return data in various shapes depending
- * on the server version. This function normalises all known variants into:
- *   { id, title, createdAt, updatedAt, notes, transcript, participants,
- *     company, duration, source }
+ * Fetch data from Granola API.
+ * Returns parsed JSON response or null on failure.
+ * Handles gzip-compressed responses automatically.
  */
-function convertMcpMeetingToStandard(meeting) {
-  const id = meeting.id || meeting.meeting_id || '';
-  const title = meeting.title || meeting.name || 'Untitled Meeting';
-  const createdAt = meeting.date || meeting.created_at || meeting.start_time || '';
-  const updatedAt = meeting.updated_at || meeting.end_time || '';
+async function fetchFromGranolaApi(endpoint, data) {
+  const token = getGranolaApiToken();
+  if (!token) return null;
 
-  // Build notes from enhanced_notes + private_notes
-  const noteParts = [];
-  if (meeting.enhanced_notes) {
-    noteParts.push(meeting.enhanced_notes);
-  }
-  if (meeting.private_notes) {
-    noteParts.push(meeting.private_notes);
-  }
-  if (meeting.notes) {
-    // Plain notes field — only add if we don't already have enhanced/private
-    if (noteParts.length === 0) {
-      noteParts.push(typeof meeting.notes === 'string' ? meeting.notes : '');
-    }
-  }
-  // If notes came as ProseMirror JSON (from notes_content or similar)
-  if (meeting.notes_content && typeof meeting.notes_content === 'object') {
-    const converted = convertProseMirrorToMarkdown(meeting.notes_content);
-    if (converted.length > noteParts.join('\n\n').length) {
-      noteParts.length = 0;
-      noteParts.push(converted);
-    }
-  }
+  const https = require('https');
+  const zlib = require('zlib');
+  const url = `https://api.granola.ai${endpoint}`;
+  const payload = JSON.stringify(data);
 
-  const notes = noteParts.join('\n\n---\n\n').trim();
-
-  // Extract participant names from attendees
-  const participants = [];
-  const attendees = meeting.attendees || meeting.participants || [];
-  if (Array.isArray(attendees)) {
-    for (const att of attendees) {
-      if (typeof att === 'string') {
-        participants.push(att);
-      } else if (att && typeof att === 'object') {
-        const name = att.name || att.fullName || att.display_name || att.email || '';
-        if (name) participants.push(name);
+  return new Promise((resolve) => {
+    const req = https.request(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': '*/*',
+        'Accept-Encoding': 'gzip, deflate',
+        'User-Agent': 'Granola/5.354.0',
+        'X-Client-Version': '5.354.0'
+      },
+      timeout: 15000
+    }, (res) => {
+      // Handle gzip/deflate compressed responses
+      let stream = res;
+      const encoding = res.headers['content-encoding'];
+      if (encoding === 'gzip') {
+        stream = res.pipe(zlib.createGunzip());
+      } else if (encoding === 'deflate') {
+        stream = res.pipe(zlib.createInflate());
       }
+
+      const chunks = [];
+      stream.on('data', chunk => chunks.push(chunk));
+      stream.on('end', () => {
+        const body = Buffer.concat(chunks).toString('utf-8');
+        if (res.statusCode === 200) {
+          try {
+            resolve(JSON.parse(body));
+          } catch (e) {
+            log(`  API response parse error: ${e.message}`);
+            resolve(null);
+          }
+        } else {
+          log(`  API returned ${res.statusCode}`);
+          resolve(null);
+        }
+      });
+      stream.on('error', () => resolve(null));
+    });
+
+    req.on('error', () => resolve(null));
+    req.on('timeout', () => { req.destroy(); resolve(null); });
+    req.write(payload);
+    req.end();
+  });
+}
+
+/**
+ * Convert an API document (from /v2/get-documents) to the standard meeting format.
+ */
+function convertApiDocToMeeting(doc) {
+  const id = doc.id || '';
+  const title = doc.title || 'Untitled Meeting';
+  const createdAt = doc.created_at || '';
+
+  // Extract notes — try last_viewed_panel (ProseMirror) first, then notes_markdown
+  let notes = '';
+  const panel = doc.last_viewed_panel;
+  if (panel && typeof panel === 'object') {
+    const content = panel.content;
+    if (content && typeof content === 'object') {
+      notes = convertProseMirrorToMarkdown(content);
     }
   }
+  if (!notes && doc.notes_markdown) {
+    notes = doc.notes_markdown;
+  }
 
-  // Duration
-  let duration = meeting.duration || null;
-  if (!duration && createdAt && updatedAt) {
-    const start = new Date(createdAt);
-    const end = new Date(updatedAt);
-    if (!isNaN(start) && !isNaN(end) && end > start) {
-      duration = Math.round((end - start) / 60000); // minutes
+  // Extract participants
+  const participants = [];
+  if (doc.people?.attendees) {
+    for (const attendee of doc.people.attendees) {
+      const name = attendee.details?.person?.name?.fullName || attendee.name || attendee.email;
+      if (name) participants.push(name);
     }
+  }
+  if (doc.people?.creator?.name) {
+    participants.push(doc.people.creator.name);
+  }
+
+  // Get transcript if available in the document
+  let transcript = '';
+  if (doc.transcripts && Array.isArray(doc.transcripts)) {
+    transcript = doc.transcripts
+      .sort((a, b) => new Date(a.start_timestamp) - new Date(b.start_timestamp))
+      .map(t => t.text)
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   return {
     id,
     title,
     createdAt,
-    updatedAt,
+    updatedAt: doc.updated_at || '',
     notes,
-    transcript: '', // transcript fetched separately
+    transcript,
     participants: [...new Set(participants)],
     company: extractCompanyFromTitle(title),
-    duration,
-    source: 'mcp'
+    duration: doc.meeting_end_count ? doc.meeting_end_count * 5 : null,
+    source: 'api'
   };
 }
 
 /**
- * Fetch new meetings via the Granola MCP server.
+ * Fetch new meetings via Granola's API (includes mobile recordings).
  *
- * Flow:
- *   1. list_meetings → get IDs and metadata
- *   2. Filter to unprocessed meetings within lookback window
- *   3. get_meetings for the unprocessed IDs → full content
- *   4. get_meeting_transcript for each → raw transcript (best-effort)
- *   5. Convert to standard meeting format
+ * Uses the same API that Granola's desktop app uses, authenticated via
+ * the token Granola stores locally in supabase.json. No separate OAuth
+ * flow needed — if Granola is installed and you're signed in, it works.
  *
- * Returns an array of meeting objects, or null if MCP is unavailable.
+ * Returns an array of meeting objects, or null if API is unavailable.
  */
-async function getNewMeetingsFromMcp(state, forceToday = false) {
-  const mcpClient = createMcpClient();
-
-  if (!mcpClient.isAvailable()) {
-    log('  MCP tokens not found, skipping MCP source');
+async function getNewMeetingsFromApi(state, forceToday = false) {
+  const token = getGranolaApiToken();
+  if (!token) {
+    log('  Granola API token not found (is Granola installed and signed in?)');
     return null;
   }
 
   try {
-    // Step 1: Initialize session
-    await mcpClient.initialize();
+    const response = await fetchFromGranolaApi('/v2/get-documents', {
+      limit: 100,
+      offset: 0,
+      include_last_viewed_panel: true
+    });
 
-    // Step 2: List meetings
-    const listResult = await mcpClient.listMeetings();
-    if (!listResult) {
-      log('  MCP list_meetings returned no data');
-      mcpClient.close();
+    if (!response || !response.docs) {
+      log('  API unavailable or returned no data');
       return null;
     }
 
-    // Normalise list result to an array of meeting stubs
-    let meetingList = [];
-    if (Array.isArray(listResult)) {
-      meetingList = listResult;
-    } else if (listResult.meetings && Array.isArray(listResult.meetings)) {
-      meetingList = listResult.meetings;
-    } else if (typeof listResult === 'string') {
-      // Sometimes MCP tools return markdown text — try to parse structured data from it
-      log('  MCP list_meetings returned text, attempting parse...');
-      try {
-        meetingList = JSON.parse(listResult);
-        if (!Array.isArray(meetingList)) {
-          meetingList = meetingList.meetings || [];
-        }
-      } catch (e) {
-        // Text response that is not JSON — cannot extract meeting IDs
-        log('  Could not parse meeting list from text response');
-        mcpClient.close();
-        return null;
-      }
-    }
+    log(`  API returned ${response.docs.length} documents`);
 
-    log(`  MCP returned ${meetingList.length} meetings`);
-
-    // Step 3: Filter to unprocessed, within lookback window
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - LOOKBACK_DAYS);
     const today = new Date().toISOString().split('T')[0];
 
-    const unprocessedIds = [];
-    const meetingMeta = {};
+    const newMeetings = [];
+    for (const doc of response.docs) {
+      // Skip deleted
+      if (doc.deleted_at) continue;
 
-    for (const m of meetingList) {
-      const id = m.id || m.meeting_id || '';
-      if (!id) continue;
-
-      const dateStr = m.date || m.created_at || m.start_time || '';
-      const docDate = dateStr.split('T')[0];
-
-      // Check processed state
+      // Check if already processed (unless forcing today's meetings)
+      const docDate = doc.created_at?.split('T')[0];
       if (forceToday && docDate === today) {
         // Allow reprocessing today's meetings
-      } else if (state.processedMeetings[id]) {
+      } else if (state.processedMeetings[doc.id]) {
         continue;
       }
 
       // Check date cutoff
-      const createdAt = new Date(dateStr);
+      const createdAt = new Date(doc.created_at);
       if (isNaN(createdAt.getTime()) || createdAt < cutoffDate) continue;
 
-      unprocessedIds.push(id);
-      meetingMeta[id] = m;
-    }
+      const meeting = convertApiDocToMeeting(doc);
 
-    if (unprocessedIds.length === 0) {
-      log('  No unprocessed meetings found via MCP');
-      mcpClient.close();
-      return [];
-    }
-
-    log(`  ${unprocessedIds.length} unprocessed meeting(s) to fetch`);
-
-    // Step 4: Get full meeting content (batch)
-    const fullMeetings = await mcpClient.getMeetings(unprocessedIds);
-
-    // Normalise to array
-    let meetingDetails = [];
-    if (Array.isArray(fullMeetings)) {
-      meetingDetails = fullMeetings;
-    } else if (fullMeetings && fullMeetings.meetings && Array.isArray(fullMeetings.meetings)) {
-      meetingDetails = fullMeetings.meetings;
-    } else if (fullMeetings && typeof fullMeetings === 'object' && !Array.isArray(fullMeetings)) {
-      // Single meeting object or keyed by ID
-      if (fullMeetings.id || fullMeetings.meeting_id) {
-        meetingDetails = [fullMeetings];
-      } else {
-        // Might be keyed object { id1: {...}, id2: {...} }
-        meetingDetails = Object.values(fullMeetings);
-      }
-    }
-
-    // Step 5: Convert to standard format and enrich with transcripts
-    const newMeetings = [];
-
-    for (const detail of meetingDetails) {
-      const meeting = convertMcpMeetingToStandard(detail);
-
-      // Merge any metadata from the list response
-      const meta = meetingMeta[meeting.id];
-      if (meta) {
-        if (!meeting.title || meeting.title === 'Untitled Meeting') {
-          meeting.title = meta.title || meta.name || meeting.title;
-        }
-        if (meeting.participants.length === 0 && meta.attendees) {
-          const attendees = Array.isArray(meta.attendees) ? meta.attendees : [];
-          for (const att of attendees) {
-            const name = typeof att === 'string' ? att : (att.name || att.email || '');
-            if (name) meeting.participants.push(name);
-          }
-          meeting.participants = [...new Set(meeting.participants)];
-        }
-        if (!meeting.company) {
-          meeting.company = extractCompanyFromTitle(meeting.title);
-        }
-      }
-
-      // Skip meetings with insufficient content
-      if (meeting.notes.length < MIN_NOTES_LENGTH) {
-        log(`  Skipping "${meeting.title}" — notes too short (${meeting.notes.length} chars)`);
-        continue;
-      }
-
-      // Step 5b: Try to get transcript (best-effort, may fail on free tiers)
-      try {
-        const transcript = await mcpClient.getTranscript(meeting.id);
-        if (transcript) {
-          if (typeof transcript === 'string') {
-            meeting.transcript = transcript;
-          } else if (transcript.text) {
-            meeting.transcript = transcript.text;
-          } else if (transcript.transcript) {
-            meeting.transcript = transcript.transcript;
-          }
-        }
-      } catch (e) {
-        // Transcript not available — not fatal
-      }
+      // Check minimum content
+      if (meeting.notes.length < MIN_NOTES_LENGTH) continue;
 
       newMeetings.push(meeting);
     }
 
-    // Sort newest first
     newMeetings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    mcpClient.close();
     return newMeetings;
 
   } catch (err) {
-    log(`  MCP error: ${err.message}`);
-    try { mcpClient.close(); } catch (e) { /* ignore */ }
+    log(`  API error: ${err.message}`);
     return null;
   }
 }
@@ -787,12 +751,10 @@ function buildMeetingContent(meeting) {
 }
 
 function generateTaskId() {
-  // Generate sequential 3-digit ID for the day
-  // In the automated script, we'll use a simple counter
   const now = new Date();
   const ms = now.getMilliseconds();
   const seconds = now.getSeconds();
-  const num = ((seconds * 1000 + ms) % 999) + 1; // Ensures 1-999
+  const num = ((seconds * 1000 + ms) % 999) + 1;
   return num.toString().padStart(3, '0');
 }
 
@@ -824,7 +786,6 @@ function createMeetingNote(meeting, analysis, profile, pillars) {
   // Extract pillar from analysis
   const pillarMatch = analysis.match(/## Pillar Assignment\n\n([^\n]+)/i);
   let pillar = pillarMatch ? pillarMatch[1].trim() : pillars[0];
-  // Clean up pillar - remove brackets, quotes, etc.
   pillar = pillar.replace(/[\[\]"']/g, '').trim();
 
   // Filter participants to exclude the owner
@@ -833,6 +794,8 @@ function createMeetingNote(meeting, analysis, profile, pillars) {
     p.toLowerCase() !== ownerName.toLowerCase() &&
     !p.toLowerCase().includes(ownerName.toLowerCase().split(' ')[0])
   );
+
+  const sourceLabel = meeting.source === 'api' ? 'API' : 'Cache';
 
   const content = `---
 date: ${date}
@@ -879,7 +842,7 @@ ${meeting.transcript.slice(0, 5000)}${meeting.transcript.length > 5000 ? '\n\n[T
 ` : ''}
 
 ---
-*Processed by Dex Meeting Intel (${meeting.source === 'mcp' ? 'MCP' : 'Cache'} source)*
+*Processed by Dex Meeting Intel (${sourceLabel} source)*
 `;
 
   fs.writeFileSync(filepath, content);
@@ -898,12 +861,10 @@ ${meeting.transcript.slice(0, 5000)}${meeting.transcript.length > 5000 ? '\n\n[T
 function updateQueue(processedMeetings) {
   const today = new Date().toISOString().split('T')[0];
 
-  // Ensure meetings dir exists
   if (!fs.existsSync(MEETINGS_DIR)) {
     fs.mkdirSync(MEETINGS_DIR, { recursive: true });
   }
 
-  // Read existing queue
   let queueContent = '';
   if (fs.existsSync(QUEUE_FILE)) {
     queueContent = fs.readFileSync(QUEUE_FILE, 'utf-8');
@@ -926,7 +887,6 @@ Meetings pending processing and recently processed.
 `;
   }
 
-  // Add processed meetings to the Processed section
   const processedSection = /## Processed \(Last 7 Days\)\n\n/;
   const newLines = processedMeetings.map(m =>
     `- [x] ${m.meeting.title} | ${m.meeting.company || 'N/A'} | ${today} | ${m.wikilink}`
@@ -976,7 +936,7 @@ async function main() {
   const force = args.includes('--force');
 
   log('='.repeat(60));
-  log('Dex Meeting Intel - Granola Sync (MCP-first)');
+  log('Dex Meeting Intel - Granola Sync (API-first)');
   log('='.repeat(60));
 
   // Load configuration
@@ -990,21 +950,21 @@ async function main() {
   log(`Last sync: ${state.lastSync || 'Never'}`);
   log(`Previously processed: ${Object.keys(state.processedMeetings).length} meetings`);
 
-  // ---- Data source: MCP-first with cache fallback ----
+  // ---- Data source: API-first with cache fallback ----
   let newMeetings = null;
   let dataSource = 'none';
 
-  log('\nFetching meetings (MCP-first with cache fallback)...');
+  log('\nFetching meetings (API-first with cache fallback)...');
 
-  // Try MCP first
-  newMeetings = await getNewMeetingsFromMcp(state, force);
+  // Try Granola API first (structured JSON, includes mobile recordings)
+  newMeetings = await getNewMeetingsFromApi(state, force);
 
   if (newMeetings !== null) {
-    dataSource = 'mcp';
-    log(`  Using MCP data (${newMeetings.length} meetings)`);
+    dataSource = 'api';
+    log(`  Using API data (${newMeetings.length} meetings)`);
   } else {
-    // Fallback to local cache
-    log('  MCP unavailable, falling back to local cache...');
+    // Fallback to local cache (desktop meetings only)
+    log('  API unavailable, falling back to local cache...');
     let cache;
     try {
       cache = readGranolaCache();
@@ -1012,7 +972,7 @@ async function main() {
       dataSource = 'cache';
     } catch (err) {
       log(`ERROR: Could not read cache either: ${err.message}`);
-      log('Neither MCP nor local cache available. Exiting.');
+      log('Neither API nor local cache available. Exiting.');
       process.exit(1);
     }
     newMeetings = getNewMeetings(cache, state, force);

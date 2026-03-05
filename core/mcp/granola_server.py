@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 # ============================================================================
-# DEPRECATED: This custom MCP server is replaced by Granola's official MCP.
-# Official endpoint: https://mcp.granola.ai/mcp
-# This file is kept for reference only. The background sync now uses
-# granola-mcp-client.cjs which calls the official MCP directly.
+# DEPRECATED: Background sync now uses Granola's direct API (api.granola.ai)
+# via sync-from-granola.cjs. This file is kept for reference only.
 # See: .claude/reference/meeting-intel.md
 # ============================================================================
 """

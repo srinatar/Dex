@@ -133,6 +133,19 @@ When the user expresses frustration or wishes during natural conversation, captu
 ### Automatic Person Page Updates
 When significant context about people is shared (role changes, relationships, project involvement), proactively update their person pages without being asked.
 
+### Auto-Link People in Generated Content
+After writing or updating any vault markdown file that mentions people (daily plans, week priorities, tasks, meeting notes), run the auto-link script as a post-processing step:
+
+```bash
+node .scripts/auto-link-people.cjs <file-path>
+```
+
+This converts known people names to `[[Firstname_Lastname|Name]]` WikiLinks using the people-engine registry. It handles full names, safe aliases, and unambiguous first names while skipping existing WikiLinks, frontmatter, and code blocks. The script also detects when a first name appears as part of an unknown full name (e.g., "Jessica Jolly") and avoids false-linking standalone uses of that first name.
+
+For batch processing of key files: `node .scripts/auto-link-people.cjs --today`
+
+The script is also available as a module: `const { autoLinkContent } = require('./.scripts/auto-link-people.cjs');`
+
 ### Communication Adaptation
 
 Adapt your tone and language based on user preferences in `System/user-profile.yaml` → `communication` section:
@@ -152,11 +165,9 @@ When the user mentions any of these:
 - "refresh Granola", "Granola not working", "Granola sign-in"
 
 **Action:**
-1. Run `node .scripts/meeting-intel/check-granola-migration.cjs 2>/dev/null || echo '{"status":"not_applicable"}'`
-2. If `migration_available`: Offer to set up mobile recordings — "To get your phone meetings syncing, you just need to sign in to Granola in your browser once. Want to do that now?" If yes, run `node .scripts/meeting-intel/granola-auth.cjs --setup`
-3. If `token_expired`: Offer to refresh — "Your Granola sign-in has expired. Let me refresh it." Run `node .scripts/meeting-intel/granola-auth.cjs --setup`
-4. If `authenticated`: Tell them it's already set up and suggest checking if Granola's iOS app is syncing to cloud
-5. If `not_applicable`: Granola isn't installed — guide them to [granola.ai](https://granola.ai)
+1. Check if Granola credentials exist: look for `supabase.json` in Granola's app data directory
+2. If credentials exist: Mobile recordings sync automatically. Suggest checking if Granola's iOS app is syncing to cloud, and that background sync is installed (`cd .scripts/meeting-intel && ./install-automation.sh`)
+3. If no credentials: Granola isn't installed or user isn't signed in — guide them to [granola.ai](https://granola.ai) and ensure they sign in to the desktop app
 
 ### Meeting Capture
 When the user shares meeting notes or says they had a meeting:

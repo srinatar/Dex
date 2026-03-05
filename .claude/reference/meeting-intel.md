@@ -4,13 +4,13 @@ Process meetings from Granola to extract structured insights, action items, and 
 
 ## How It Works
 
-Meetings sync **automatically in the background** every 30 minutes via Granola's official MCP server.
+Meetings sync **automatically in the background** every 30 minutes via Granola's API.
 
 ```
-Granola App (desktop + mobile) → Granola Cloud → Official MCP → Background Sync (every 30 min) → Synced Files → /process-meetings → Person Pages, Tasks
+Granola App (desktop + mobile) → Granola Cloud → API → Background Sync (every 30 min) → Synced Files → /process-meetings → Person Pages, Tasks
 ```
 
-**Key improvement:** Mobile phone recordings are now captured alongside desktop meetings.
+**Key features:** Mobile phone recordings are captured alongside desktop meetings. No separate OAuth setup needed — uses the token Granola's desktop app already stores on your machine.
 
 ## Setup (One-Time)
 
@@ -22,21 +22,11 @@ cd .scripts/meeting-intel && ./install-automation.sh
 
 This will:
 - Check prerequisites (Node.js, Granola, LLM API key)
-- Authenticate with Granola's MCP (opens browser once)
 - Install the 30-minute background sync via macOS Launch Agent
 
-### 2. Authenticate with Granola
+### 2. Authentication
 
-If you need to re-authenticate (token expired, new machine):
-
-```bash
-node .scripts/meeting-intel/granola-auth.cjs --setup
-```
-
-Check auth status:
-```bash
-node .scripts/meeting-intel/granola-auth.cjs --status
-```
+Dex uses the same credentials Granola's desktop app stores locally. As long as you're signed into Granola on your computer, meeting sync works automatically. No separate sign-in step needed.
 
 **Requirements:**
 - Granola app installed ([granola.ai](https://granola.ai)) with a paid plan
@@ -46,8 +36,8 @@ node .scripts/meeting-intel/granola-auth.cjs --status
 
 | Source | What it captures | When used |
 |--------|-----------------|-----------|
-| **Official Granola MCP** (primary) | Desktop + mobile recordings, notes, transcripts | When authenticated |
-| **Local cache** (fallback) | Desktop recordings only | When offline or MCP unavailable |
+| **Granola API** (primary) | Desktop + mobile recordings, notes, transcripts | When Granola is signed in |
+| **Local cache** (fallback) | Desktop recordings only | When API unavailable |
 
 ## Using /process-meetings
 
@@ -107,18 +97,6 @@ node .scripts/meeting-intel/sync-from-granola.cjs --dry-run # Preview
 node .scripts/meeting-intel/sync-from-granola.cjs --force   # Reprocess today
 ```
 
-## Authentication Management
-
-```bash
-node .scripts/meeting-intel/granola-auth.cjs --status   # Check token status
-node .scripts/meeting-intel/granola-auth.cjs --setup    # Re-authenticate
-node .scripts/meeting-intel/granola-auth.cjs --refresh  # Force token refresh
-node .scripts/meeting-intel/granola-auth.cjs --revoke   # Remove stored tokens
-./install-automation.sh --auth                           # Re-authenticate shortcut
-```
-
-Tokens are stored at `~/.config/dex/granola-tokens.json`.
-
 ## Stopping Background Sync
 
 ```bash
@@ -134,23 +112,14 @@ Tokens are stored at `~/.config/dex/granola-tokens.json`.
 ## Troubleshooting
 
 **No meetings showing up?**
-1. Check Granola auth: `node .scripts/meeting-intel/granola-auth.cjs --status`
+1. Check if Granola is installed and you're signed in
 2. Check if background sync is set up: `./install-automation.sh --status`
 3. Check logs for errors: `tail -50 .scripts/logs/meeting-intel.stderr.log`
 
 **Mobile recordings not syncing?**
 1. Ensure you have a paid Granola plan
 2. Check that the Granola iOS app is syncing to cloud
-3. Re-authenticate: `node .scripts/meeting-intel/granola-auth.cjs --setup`
-
-**Token expired?**
-```bash
-node .scripts/meeting-intel/granola-auth.cjs --refresh
-```
-If refresh fails, re-authenticate:
-```bash
-node .scripts/meeting-intel/granola-auth.cjs --setup
-```
+3. Sign out and back in to the Granola desktop app to refresh credentials
 
 **Background sync not running?**
 ```bash
@@ -168,12 +137,12 @@ node .scripts/meeting-intel/sync-from-granola.cjs --force
 ┌─────────────────────────────────────────────────────┐
 │ Granola Cloud (desktop + mobile recordings)          │
 └──────────────────────┬──────────────────────────────┘
-                       │ Official MCP (https://mcp.granola.ai/mcp)
+                       │ API (api.granola.ai, structured JSON)
                        ▼
 ┌─────────────────────────────────────────────────────┐
 │ Background Sync (launchd, every 30 min)              │
-│  - granola-mcp-client.cjs → list + get meetings     │
-│  - granola-auth.cjs → OAuth token management        │
+│  - sync-from-granola.cjs → API fetch + LLM analysis │
+│  - Auth: reads Granola's local supabase.json         │
 │  - Fallback: local cache-v*.json (desktop only)      │
 └──────────────────────┬──────────────────────────────┘
                        │ LLM extraction (Gemini/Claude/GPT)
