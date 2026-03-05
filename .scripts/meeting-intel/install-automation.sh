@@ -70,12 +70,11 @@ if [ "$1" = "--status" ]; then
     exit 0
 fi
 
-# Legacy --auth flag (no longer needed, credentials come from Granola desktop app)
+# Re-authenticate with Granola
 if [ "$1" = "--auth" ]; then
-    echo "Separate authentication is no longer needed."
-    echo "Dex uses the credentials Granola's desktop app stores automatically."
-    echo "Just make sure you're signed in to Granola on your computer."
-    exit 0
+    echo "Re-authenticating with Granola MCP..."
+    "$NODE_PATH" "$SCRIPT_DIR/granola-auth.cjs" --setup
+    exit $?
 fi
 
 # Stop and uninstall
@@ -122,14 +121,35 @@ else
     echo -e "${YELLOW}!${NC} Granola cache not found. Install Granola and record a meeting first."
 fi
 
-# Check for Granola API credentials (stored by Granola's desktop app)
-GRANOLA_CREDS="$HOME/Library/Application Support/Granola/supabase.json"
-if [ -f "$GRANOLA_CREDS" ]; then
-    echo -e "${GREEN}✓${NC} Granola API credentials found (includes mobile recordings)"
+# Authenticate with Granola MCP
+GRANOLA_TOKENS="$HOME/.config/dex/granola-tokens.json"
+if [ -f "$GRANOLA_TOKENS" ]; then
+    echo -e "${GREEN}✓${NC} Granola MCP authentication found"
 else
-    echo -e "${YELLOW}!${NC} Granola API credentials not found. Make sure you're signed in to the Granola desktop app."
-    echo "    Background sync will use local cache only (desktop meetings) until you sign in."
+    echo ""
+    echo "Authenticating with Granola..."
+    echo "This will open your browser to sign in to Granola."
+    echo ""
+    read -p "Press Enter to continue (or Ctrl+C to skip)..."
+
+    if [ -n "$NODE_PATH" ]; then
+        "$NODE_PATH" "$SCRIPT_DIR/granola-auth.cjs" --setup
+        if [ $? -eq 0 ] && [ -f "$GRANOLA_TOKENS" ]; then
+            echo -e "${GREEN}✓${NC} Granola MCP authenticated"
+        else
+            echo -e "${YELLOW}!${NC} Granola auth skipped. Background sync will use local cache only."
+            echo "    Run: node .scripts/meeting-intel/granola-auth.cjs --setup"
+        fi
+    fi
 fi
+
+# Write vault-path breadcrumb (used by dex-launcher.sh for resilient path resolution)
+mkdir -p "$HOME/.config/dex"
+echo "$VAULT_PATH" > "$HOME/.config/dex/vault-path"
+echo -e "${GREEN}✓${NC} Vault path registered: $VAULT_PATH"
+
+# Make launcher executable
+chmod +x "$VAULT_PATH/.scripts/dex-launcher.sh"
 
 # Create logs directory
 mkdir -p "$LOG_DIR"
@@ -179,13 +199,17 @@ echo -e "${GREEN}Installation complete!${NC}"
 echo ""
 echo "What happens now:"
 echo "  • Meetings sync automatically every 30 minutes"
-echo "  • Syncs via Granola's API (includes mobile recordings)"
+echo "  • Syncs via Granola's official MCP (includes mobile recordings)"
 echo "  • Also syncs when you log in or wake your laptop"
 echo "  • /process-meetings now reads synced files (no terminal output)"
 echo ""
 echo "Commands:"
 echo "  ./install-automation.sh --status    Check if running"
 echo "  ./install-automation.sh --stop      Disable background sync"
+echo "  ./install-automation.sh --auth      Re-authenticate with Granola"
+echo ""
+echo "  node .scripts/meeting-intel/granola-auth.cjs --status   Check Granola auth"
+echo "  node .scripts/meeting-intel/granola-auth.cjs --setup    Re-authenticate"
 echo ""
 echo "Logs:"
 echo "  $LOG_DIR/meeting-intel.stdout.log"
