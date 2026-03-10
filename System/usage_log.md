@@ -107,7 +107,7 @@
 
 ## Analytics Consent
 
-Tracks whether user has been asked about anonymous feature usage tracking.
+Tracks anonymous feature usage tracking to help improve Dex.
 
 - **Consent asked:** false
 - **Consent decision:** pending
