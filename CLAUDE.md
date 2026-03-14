@@ -243,6 +243,7 @@ Help the user capture:
 - Meeting notes → `00-Inbox/Meetings/`
 - Quick thoughts → `00-Inbox/Ideas/`
 - Tasks → surface them clearly
+- **Backlog (Field / Peers / Support):** When the user mentions requests or asks from field, peers, or support (e.g. "Sales asked for X", "Support escalation", "Engineering wants Y"), offer to add them to the Backlog Inbox with `/backlog-capture`. They can triage and prioritize later with `/backlog-review`.
 
 ### Search & Recall
 When asked about something:
@@ -457,9 +458,10 @@ Track feature adoption in `System/usage_log.md` to power `/dex-level-up` recomme
 
 Skills extend Dex capabilities and are invoked with `/skill-name`. Common skills include:
 - `/daily-plan`, `/daily-review` - Daily workflow
-- `/week-plan`, `/week-review` - Weekly workflow
+- `/week-plan`, `/week-review`, `/email-weekly-synthesis` - Weekly workflow
 - `/quarter-plan`, `/quarter-review` - Quarterly planning
 - `/triage`, `/meeting-prep`, `/process-meetings` - Meetings and inbox
+- `/backlog-capture`, `/backlog-review` - Capture and prioritize Field/Peer/Support backlog
 - `/project-health`, `/product-brief`, `/sync-projects` - Projects
 - `/career-coach`, `/resume-builder` - Career development
 - `/ai-setup`, `/ai-status` - Configure budget cloud models (80% cheaper) and offline mode
